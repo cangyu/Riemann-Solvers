@@ -1,10 +1,12 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <exception>
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -22,6 +24,7 @@ const double G8 = gamma - 1;
 const double G9 = -G2;
 const double G10 = -0.5*(gamma + 1) / pow(gamma, 2);
 const double G11 = -0.5*(3 * gamma + 1) / gamma;
+const double G12 = 1 / gamma;
 
 typedef struct
 {
@@ -112,6 +115,99 @@ double ddfk(double p, const PrimitiveVariable &Wk)
 double ddf(double p, const PrimitiveVariable &Wl, const PrimitiveVariable &Wr)
 {
 	return ddfk(p, Wl) + ddfk(p, Wr);
+}
+
+double rhos(double ps, const PrimitiveVariable &Wk)
+{
+	double t = ps / Wk.p;
+
+	if (ps > Wk.p)
+		return Wk.rho * ((t + G6) / (G6*t + 1));
+	else
+		return Wk.rho * pow(t, G12);
+}
+
+void CalcWfan(const PrimitiveVariable &Wk, double S, PrimitiveVariable &ans)
+{
+	ans.rho = Wk.rho * pow(G5 + G6 / Wk.a *(Wk.u - S), G4);
+	ans.u = G5 * (Wk.a + G7 * Wk.u + S);
+	ans.p = Wk.p * pow(G5 + G6 / Wk.a * (Wk.u - S), G3);
+}
+
+void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl, const PrimitiveVariable &Wsr, const PrimitiveVariable &Wr, double S, PrimitiveVariable &ans)
+{
+	double S_L = Wl.u - Wl.a * sqrt(G2 * Wsl.p / Wl.p + G1);
+	double S_HL = Wl.u - Wl.a;
+	double S_TL = Wsl.u - Wsl.a;
+	double S_R = Wr.u + Wr.a * sqrt(G2 * Wsr.p / Wr.p + G1);
+	double S_HR = Wr.u + Wr.a;
+	double S_TR = Wsr.u + Wsr.a;
+	double u_star = Wsl.u;
+
+	if (Wsl.p > Wl.p)
+	{
+		//Left Shock
+		if (Wsr.p > Wr.p)
+		{
+			//Right Shock
+			if (S < S_L)
+				ans = Wl;
+			else if (S < u_star)
+				ans = Wsl;
+			else if (S < S_R)
+				ans = Wsr;
+			else
+				ans = Wr;
+		}
+		else
+		{
+			//Right Rarefaction
+			if (S < S_L)
+				ans = Wl;
+			else if (S < u_star)
+				ans = Wsl;
+			else if (S < S_TR)
+				ans = Wsr;
+			else if (S < S_HR)
+				CalcWfan(Wr, S, ans);
+			else
+				ans = Wr;
+		}
+	}
+	else
+	{
+		//Left Rarefaction
+		if (Wsr.p > Wr.p)
+		{
+			//Right Shock
+			if (S < S_HL)
+				ans = Wl;
+			else if (S < S_TL)
+				CalcWfan(Wl, S, ans);
+			else if (S < u_star)
+				ans = Wsl;
+			else if (S < S_R)
+				ans = Wsr;
+			else
+				ans = Wr;
+		}
+		else
+		{
+			//Right Rarefaction
+			if (S < S_HL)
+				ans = Wl;
+			else if (S < S_TL)
+				CalcWfan(Wl, S, ans);
+			else if (S < u_star)
+				ans = Wsl;
+			else if (S < S_TR)
+				ans = Wsr;
+			else if (S < S_HR)
+				CalcWfan(Wr, S, ans);
+			else
+				ans = Wr;
+		}
+	}
 }
 
 int main(int argc, char *argv[])
@@ -225,16 +321,69 @@ int main(int argc, char *argv[])
 			p0 = p;
 			cout << "Iter: " << iter_cnt << "  " << "P: " << p0 << endl;
 		}
-
 		cout << "Done!\n" << endl;
 
-		double us = (Wl.u + Wr.u) / 2 + (fk(p0, Wr) - fk(p0, Wl))/2;
-		double rhosL = 0.0;
-		double rhosR = 0.0;
+		PrimitiveVariable Wsl, Wsr;
+		Wsl.p = Wsr.p = p0;
+		Wsl.u = Wsr.u = (Wl.u + Wr.u) / 2 + (fk(p0, Wr) - fk(p0, Wl)) / 2;
+		Wsl.rho = rhos(p0, Wl);
+		Wsr.rho = rhos(p0, Wr);
+		Wsl.a = sound_speed(Wsl.p, Wsl.rho);
+		Wsr.a = sound_speed(Wsr.p, Wsr.rho);
 
-		cout << setw(16) << std::left << "p*" << setw(16) << std::left << "u*" << setw(16) << std::left << "rho_sL" << setw(16) << std::left << "rho_sR" << endl;
-		cout << setw(16) << std::left << p0 << setw(16) << std::left << us << setw(16) << std::left << rhosL << setw(16) << std::left << rhosR << endl;
-		cout << endl;
+		cout << setw(16) << std::left << "p*" << setw(16) << std::left << "u*" << setw(16) << std::left << "rho*L" << setw(16) << std::left << "rho*R" << endl;
+		cout << setw(16) << std::left << p0 << setw(16) << std::left << Wsl.u << setw(16) << std::left << Wsl.rho << setw(16) << std::left << Wsr.rho << endl;
+
+
+		cout << "\nGenerating animation data..." << endl;
+		double dt = 0.1;
+		int NumOfStep = 11;
+		vector<double> t_sample = vector<double>(NumOfStep);
+		for (int n = 0; n < NumOfStep; n++)
+			t_sample[n] = n * dt;
+
+		double xl = -10, xr = 10;
+		int NumOfLeftPnt = 100, NumOfRightPnt = 100;
+		double dxl = -xl / NumOfLeftPnt, dxr = xr/NumOfRightPnt;
+		int NumOfPnt = NumOfLeftPnt + NumOfRightPnt;
+		vector<double> x_sample = vector<double>(NumOfPnt);
+		for (int i = 0; i < NumOfLeftPnt; i++)
+			x_sample[i] = xl + i * dxl;
+		for (int i = 0; i < NumOfRightPnt; i++)
+			x_sample[NumOfPnt - (i + 1)] = xr - i * dxr;
+
+		ofstream fout = ofstream(header + ".txt");
+		if (!fout)
+			throw "Failed to open file!";
+
+		fout << NumOfStep << '\t' << NumOfPnt << endl;
+		for (int i = 0; i < NumOfPnt; i++)
+			fout << x_sample[i] << endl;
+		fout << 0 << endl;
+		for (int i = 0; i < NumOfPnt; i++)
+		{
+			double x = x_sample[i];
+			if (x < 0)
+				fout << Wl.rho << '\t' << Wl.u << '\t' << Wl.p << endl;
+			else
+				fout << Wr.rho << '\t' << Wr.u << '\t' << Wr.p << endl;
+		}
+
+		PrimitiveVariable local_ans;
+		for (int n = 1; n < NumOfStep; n++)
+		{
+			fout << n << endl;
+			double t = t_sample[n];
+			for (int i = 0; i < NumOfPnt; i++)
+			{
+				double x = x_sample[i];
+				double S = x / t;
+				SolSample(Wl, Wsl, Wsr, Wr, S, local_ans);
+				fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+			}
+		}
+		fout.close();
+		cout << "Done!" << endl;
 	}
 
 	cout.fill('=');
