@@ -12,19 +12,19 @@ using namespace std;
 
 const double TOL = 1e-6;
 
-const double gamma = 1.4;
-const double G1 = 0.5*(gamma - 1) / gamma;
-const double G2 = 0.5*(gamma + 1) / gamma;
-const double G3 = 2 * gamma / (gamma - 1);
-const double G4 = 2 / (gamma - 1);
-const double G5 = 2 / (gamma + 1);
-const double G6 = (gamma - 1) / (gamma + 1);
-const double G7 = (gamma - 1) / 2;
-const double G8 = gamma - 1;
+const double G0 = 1.4;
+const double G1 = 0.5*(G0 - 1) / G0;
+const double G2 = 0.5*(G0 + 1) / G0;
+const double G3 = 2 * G0 / (G0 - 1);
+const double G4 = 2 / (G0 - 1);
+const double G5 = 2 / (G0 + 1);
+const double G6 = (G0 - 1) / (G0 + 1);
+const double G7 = (G0 - 1) / 2;
+const double G8 = G0 - 1;
 const double G9 = -G2;
-const double G10 = -0.5*(gamma + 1) / pow(gamma, 2);
-const double G11 = -0.5*(3 * gamma + 1) / gamma;
-const double G12 = 1 / gamma;
+const double G10 = -0.5*(G0 + 1) / pow(G0, 2);
+const double G11 = -0.5*(3 * G0 + 1) / G0;
+const double G12 = 1 / G0;
 
 typedef struct
 {
@@ -38,7 +38,7 @@ typedef struct
 
 inline double sound_speed(double p, double rho)
 {
-	return sqrt(gamma*p / rho);
+	return sqrt(G0*p / rho);
 }
 
 inline double Ak(const PrimitiveVariable &Wk)
