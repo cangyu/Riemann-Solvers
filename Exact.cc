@@ -241,116 +241,49 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 
-		if (!(Wl.rho > 0) || !(Wr.rho > 0))
+		if (Wl.rho < 0 || Wr.rho < 0)
 		{
 			cerr << "Invalid data!" << endl;
 			return -2;
 		}
 
-		Wl.a = sound_speed(Wl.p, Wl.rho);
-		Wr.a = sound_speed(Wr.p, Wr.rho);
+		//Check if vacuum or not
+		int vacuum = -1;
+		if (abs(Wl.rho) < 1e-7)
+			vacuum = 1;
+		else
+			Wl.a = sound_speed(Wl.p, Wl.rho);
+			
+		if (abs(Wr.rho) < 1e-7)
+			vacuum = 2;
+		else
+			Wr.a = sound_speed(Wr.p, Wr.rho);
 
+		double du = Wr.u - Wl.u;
+		if (vacuum < 0)
+		{
+			double du_crit = G4 * (Wl.a + Wr.a);
+			if (!(du_crit > du))
+				vacuum = 3;
+			else
+				vacuum = 0;
+		}
+
+		//Banner
 		stringstream ss;
 		ss << i;
-		string header = "Case " + ss.str();
+		string header = "Case" + ss.str();
 
 		cout.fill('=');
 		cout << setw(32) << std::right << header << setw(32) << std::right << "" << endl;
 		cout.fill(' ');
 
-		//Check pressure positivity
-		double du = Wr.u - Wl.u;
-		double du_crit = G4 * (Wl.a + Wr.a);
-		if (!(du_crit > du))
-			throw "Vacuum!";
-
-		//Select initial pressure
-		double p_min = min(Wl.p, Wr.p);
-		double p_max = max(Wl.p, Wr.p);
-		double f_min = f(p_min, Wl, Wr);
-		double f_max = f(p_max, Wl, Wr);
-
-		cout << setw(16) << std::left << "P_L" << setw(16) << std::left << "P_R" << setw(16) << std::left << "f_min" << setw(16) << std::left << "f_max" << endl;
-		cout << setw(16) << std::left << Wl.p << setw(16) << std::left << Wr.p << setw(16) << std::left << f_min << setw(16) << std::left << f_max << endl;
-		cout << endl;
-
-		double p_m = (Wl.p + Wr.p) / 2;
-		p_m = max(TOL, p_m);
-		double p_pv = p_m - du * (Wl.rho + Wr.rho)*(Wl.a + Wr.a) / 8;
-		p_pv = max(TOL, p_pv);
-		double gL = gk(p_pv, Wl);
-		double gR = gk(p_pv, Wr);
-		double p_ts = (gL * Wl.p + gR * Wr.p - du) / (gL + gR);
-		p_ts = max(TOL, p_ts);
-		double p_tr = pow((Wl.a + Wr.a - G7 * du) / (Wl.a / pow(Wl.p, G1) + Wr.a / pow(Wr.p, G1)), G3);
-		p_tr = max(TOL, p_tr);
-
-		cout << setw(16) << std::left << "P_TR" << setw(16) << std::left << "P_PV" << setw(16) << std::left << "P_TS" << setw(16) << std::left << "P_M" << endl;
-		cout << setw(16) << std::left << p_tr << setw(16) << std::left << p_pv << setw(16) << std::left << p_ts << setw(16) << std::left << p_m << endl;
-		cout << endl;
-
-		cout << "P0: ";
-		double p0 = p_m;
-		if (f_min < 0 && f_max < 0)
-		{
-			cout << "Two-Shock Approximation" << endl;
-			p0 = p_ts;
-		}
-		else if (f_min > 0 && f_max > 0)
-		{
-			cout << "Two-Rarefraction Approximation" << endl;
-			p0 = p_tr;
-		}
-		else
-		{
-			cout << "Intermediate Approximation" << endl;
-			p0 = p_pv;
-		}
-
-		//Solve pressure
-		cout << "\nSolving p* ..." << endl;
-		int iter_cnt = 0;
-		double CHA = 1.0;
-		while (CHA > TOL)
-		{
-			++iter_cnt;
-
-			double fder = df(p0, Wl, Wr);
-			if (fder == 0)
-				throw "Zero derivative!";
-
-			double fval = f(p0, Wl, Wr);
-			double fder2 = ddf(p0, Wl, Wr);
-			double p = p0 - fval * fder / (pow(fder, 2) - 0.5*fval*fder2);
-			if (p < 0)
-			{
-				p0 = TOL;
-				break;
-			}
-
-			CHA = abs(2 * (p - p0) / (p + p0));
-			p0 = p;
-			cout << "Iter: " << iter_cnt << "  " << "P: " << p0 << endl;
-		}
-		cout << "Done!\n" << endl;
-
-		PrimitiveVariable Wsl, Wsr;
-		Wsl.p = Wsr.p = p0;
-		Wsl.u = Wsr.u = (Wl.u + Wr.u) / 2 + (fk(p0, Wr) - fk(p0, Wl)) / 2;
-		Wsl.rho = rhos(p0, Wl);
-		Wsr.rho = rhos(p0, Wr);
-		Wsl.a = sound_speed(Wsl.p, Wsl.rho);
-		Wsr.a = sound_speed(Wsr.p, Wsr.rho);
-
-		cout << setw(16) << std::left << "p*" << setw(16) << std::left << "u*" << setw(16) << std::left << "rho*L" << setw(16) << std::left << "rho*R" << endl;
-		cout << setw(16) << std::left << p0 << setw(16) << std::left << Wsl.u << setw(16) << std::left << Wsl.rho << setw(16) << std::left << Wsr.rho << endl;
-
-
-		cout << "\nGenerating animation data..." << endl;
+		//Time-steps
 		vector<double> t_sample = vector<double>(NumOfStep);
 		for (int n = 0; n < NumOfStep; n++)
 			t_sample[n] = n * dt;
 
+		//Coordinates
 		double xl = -50, xr = 50;
 		int NumOfLeftPnt = 250, NumOfRightPnt = 250;
 		double dxl = -xl / NumOfLeftPnt, dxr = xr/NumOfRightPnt;
@@ -360,7 +293,8 @@ int main(int argc, char *argv[])
 			x_sample[i] = xl + i * dxl;
 		for (int i = 0; i < NumOfRightPnt; i++)
 			x_sample[NumOfPnt - (i + 1)] = xr - i * dxr;
-
+		
+		//Output coordinates and intial settings
 		ofstream fout = ofstream(header + ".txt");
 		if (!fout)
 			throw "Failed to open file!";
@@ -378,21 +312,208 @@ int main(int argc, char *argv[])
 				fout << Wr.rho << '\t' << Wr.u << '\t' << Wr.p << endl;
 		}
 
+		//Solve
 		PrimitiveVariable local_ans;
-		for (int n = 1; n < NumOfStep; n++)
+		if (vacuum > 0)
 		{
-			fout << n << endl;
-			double t = t_sample[n];
-			for (int i = 0; i < NumOfPnt; i++)
+			cout << "Vacuum ";
+			if(vacuum == 1)
 			{
-				double x = x_sample[i];
-				double S = x / t;
-				SolSample(Wl, Wsl, Wsr, Wr, S, local_ans);
-				fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+				cout << "on Left!" << endl;
+				double SsR = Wr.u - G4 * Wr.a;
+				double S_HR = Wr.u + Wr.a;
+
+				cout << "\nGenerating animation data..." << endl;
+				for (int n = 1; n < NumOfStep; n++)
+				{
+					fout << n << endl;
+					double t = t_sample[n];
+					for (int i = 0; i < NumOfPnt; i++)
+					{
+						double x = x_sample[i];
+						double S = x / t;
+						
+						if (S <= SsR)
+							local_ans = Wl;
+						else if(S < S_HR)
+							CalcWfanR(Wr, S, local_ans);
+						else
+							local_ans = Wr;
+
+						fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+					}
+				}
+				cout << "Done!" << endl;
+			}
+			else if(vacuum == 2)
+			{
+				cout << "on Right!" << endl;
+
+				double SsL = Wl.u + G4 * Wl.a;
+				double S_HL = Wl.u - Wl.a;
+
+				cout << "\nGenerating animation data..." << endl;
+				for (int n = 1; n < NumOfStep; n++)
+				{
+					fout << n << endl;
+					double t = t_sample[n];
+					for (int i = 0; i < NumOfPnt; i++)
+					{
+						double x = x_sample[i];
+						double S = x / t;
+						
+						if (S <= S_HL)
+							local_ans = Wl;
+						else if(S < SsL)
+							CalcWfanL(Wl, S, local_ans);
+						else
+							local_ans = Wr;
+
+						fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+					}
+				}
+				cout << "Done!" << endl;
+			}
+			else
+			{
+				cout << "in Between!" << endl;
+
+				double SsL = Wl.u + G4 * Wl.a;
+				double SsR = Wr.u - G4 * Wr.a;
+				double S_HL = Wl.u - Wl.a;
+				double S_HR = Wr.u + Wr.a;
+
+				PrimitiveVariable W0;
+				W0.rho = 0.0;
+				W0.u = (Wl.u + Wr.u)/2;
+				W0.p = 0.0;
+
+				cout << "\nGenerating animation data..." << endl;
+				for (int n = 1; n < NumOfStep; n++)
+				{
+					fout << n << endl;
+					double t = t_sample[n];
+					for (int i = 0; i < NumOfPnt; i++)
+					{
+						double x = x_sample[i];
+						double S = x / t;
+						
+						if (S < S_HL)
+							local_ans = Wl;
+						else if(S < SsL)
+							CalcWfanL(Wl, S, local_ans);
+						else if(S < SsR)
+							local_ans = W0;
+						else if(S < S_HR)
+							CalcWfanR(Wr, S, local_ans);
+						else
+							local_ans = Wr;
+
+						fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+					}
+				}
+				cout << "Done!\n" << endl;
 			}
 		}
+		else
+		{		
+			//Select initial pressure
+			double p_min = min(Wl.p, Wr.p);
+			double p_max = max(Wl.p, Wr.p);
+			double f_min = f(p_min, Wl, Wr);
+			double f_max = f(p_max, Wl, Wr);
+
+			cout << setw(16) << std::left << "P_L" << setw(16) << std::left << "P_R" << setw(16) << std::left << "f_min" << setw(16) << std::left << "f_max" << endl;
+			cout << setw(16) << std::left << Wl.p << setw(16) << std::left << Wr.p << setw(16) << std::left << f_min << setw(16) << std::left << f_max << endl;
+			cout << endl;
+
+			double p_m = (Wl.p + Wr.p) / 2;
+			p_m = max(TOL, p_m);
+			double p_pv = p_m - du * (Wl.rho + Wr.rho)*(Wl.a + Wr.a) / 8;
+			p_pv = max(TOL, p_pv);
+			double gL = gk(p_pv, Wl);
+			double gR = gk(p_pv, Wr);
+			double p_ts = (gL * Wl.p + gR * Wr.p - du) / (gL + gR);
+			p_ts = max(TOL, p_ts);
+			double p_tr = pow((Wl.a + Wr.a - G7 * du) / (Wl.a / pow(Wl.p, G1) + Wr.a / pow(Wr.p, G1)), G3);
+			p_tr = max(TOL, p_tr);
+
+			cout << setw(16) << std::left << "P_TR" << setw(16) << std::left << "P_PV" << setw(16) << std::left << "P_TS" << setw(16) << std::left << "P_M" << endl;
+			cout << setw(16) << std::left << p_tr << setw(16) << std::left << p_pv << setw(16) << std::left << p_ts << setw(16) << std::left << p_m << endl;
+			cout << endl;
+
+			cout << "P0: ";
+			double p0 = p_m;
+			if (f_min < 0 && f_max < 0)
+			{
+				cout << "Two-Shock Approximation" << endl;
+				p0 = p_ts;
+			}
+			else if (f_min > 0 && f_max > 0)
+			{
+				cout << "Two-Rarefraction Approximation" << endl;
+				p0 = p_tr;
+			}
+			else
+			{
+				cout << "Intermediate Approximation" << endl;
+				p0 = p_pv;
+			}
+
+			//Solve pressure
+			cout << "\nSolving p* ..." << endl;
+			int iter_cnt = 0;
+			double CHA = 1.0;
+			while (CHA > TOL)
+			{
+				++iter_cnt;
+
+				double fder = df(p0, Wl, Wr);
+				if (fder == 0)
+					throw "Zero derivative!";
+
+				double fval = f(p0, Wl, Wr);
+				double fder2 = ddf(p0, Wl, Wr);
+				double p = p0 - fval * fder / (pow(fder, 2) - 0.5*fval*fder2);
+				if (p < 0)
+				{
+					p0 = TOL;
+					break;
+				}
+
+				CHA = abs(2 * (p - p0) / (p + p0));
+				p0 = p;
+				cout << "Iter: " << iter_cnt << "  " << "P: " << p0 << endl;
+			}
+			cout << "Done!\n" << endl;
+
+			PrimitiveVariable Wsl, Wsr;
+			Wsl.p = Wsr.p = p0;
+			Wsl.u = Wsr.u = (Wl.u + Wr.u) / 2 + (fk(p0, Wr) - fk(p0, Wl)) / 2;
+			Wsl.rho = rhos(p0, Wl);
+			Wsr.rho = rhos(p0, Wr);
+			Wsl.a = sound_speed(Wsl.p, Wsl.rho);
+			Wsr.a = sound_speed(Wsr.p, Wsr.rho);
+
+			cout << setw(16) << std::left << "p*" << setw(16) << std::left << "u*" << setw(16) << std::left << "rho*L" << setw(16) << std::left << "rho*R" << endl;
+			cout << setw(16) << std::left << p0 << setw(16) << std::left << Wsl.u << setw(16) << std::left << Wsl.rho << setw(16) << std::left << Wsr.rho << endl;
+
+			cout << "\nGenerating animation data..." << endl;
+			for (int n = 1; n < NumOfStep; n++)
+			{
+				fout << n << endl;
+				double t = t_sample[n];
+				for (int i = 0; i < NumOfPnt; i++)
+				{
+					double x = x_sample[i];
+					double S = x / t;
+					SolSample(Wl, Wsl, Wsr, Wr, S, local_ans);
+					fout << local_ans.rho << '\t' << local_ans.u << '\t' << local_ans.p << endl;
+				}
+			}
+			cout << "Done!" << endl;
+		}
 		fout.close();
-		cout << "Done!" << endl;
 	}
 
 	cout.fill('=');
