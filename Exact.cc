@@ -134,7 +134,7 @@ void CalcWfan(const PrimitiveVariable &Wk, double S, PrimitiveVariable &ans)
 	ans.p = Wk.p * pow(G5 + G6 / Wk.a * (Wk.u - S), G3);
 }
 
-void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl, const PrimitiveVariable &Wsr, const PrimitiveVariable &Wr, double S, PrimitiveVariable &ans)
+inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl, const PrimitiveVariable &Wsr, const PrimitiveVariable &Wr, double S, PrimitiveVariable &ans)
 {
 	double S_L = Wl.u - Wl.a * sqrt(G2 * Wsl.p / Wl.p + G1);
 	double S_HL = Wl.u - Wl.a;
@@ -337,13 +337,13 @@ int main(int argc, char *argv[])
 
 		cout << "\nGenerating animation data..." << endl;
 		double dt = 0.1;
-		int NumOfStep = 11;
+		int NumOfStep = 201;
 		vector<double> t_sample = vector<double>(NumOfStep);
 		for (int n = 0; n < NumOfStep; n++)
 			t_sample[n] = n * dt;
 
-		double xl = -10, xr = 10;
-		int NumOfLeftPnt = 100, NumOfRightPnt = 100;
+		double xl = -50, xr = 50;
+		int NumOfLeftPnt = 250, NumOfRightPnt = 250;
 		double dxl = -xl / NumOfLeftPnt, dxr = xr/NumOfRightPnt;
 		int NumOfPnt = NumOfLeftPnt + NumOfRightPnt;
 		vector<double> x_sample = vector<double>(NumOfPnt);
