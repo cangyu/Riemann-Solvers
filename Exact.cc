@@ -127,22 +127,30 @@ double rhos(double ps, const PrimitiveVariable &Wk)
 		return Wk.rho * pow(t, G12);
 }
 
-void CalcWfan(const PrimitiveVariable &Wk, double S, PrimitiveVariable &ans)
+void CalcWfanL(const PrimitiveVariable &Wk, double S, PrimitiveVariable &ans)
 {
 	ans.rho = Wk.rho * pow(G5 + G6 / Wk.a *(Wk.u - S), G4);
 	ans.u = G5 * (Wk.a + G7 * Wk.u + S);
 	ans.p = Wk.p * pow(G5 + G6 / Wk.a * (Wk.u - S), G3);
 }
 
+void CalcWfanR(const PrimitiveVariable &Wk, double S, PrimitiveVariable &ans)
+{
+	ans.rho = Wk.rho * pow(G5 - G6 / Wk.a *(Wk.u - S), G4);
+	ans.u = G5 * (-Wk.a + G7 * Wk.u + S);
+	ans.p = Wk.p * pow(G5 - G6 / Wk.a * (Wk.u - S), G3);
+}
+
 inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl, const PrimitiveVariable &Wsr, const PrimitiveVariable &Wr, double S, PrimitiveVariable &ans)
 {
+	double u_star = Wsl.u;
 	double S_L = Wl.u - Wl.a * sqrt(G2 * Wsl.p / Wl.p + G1);
 	double S_HL = Wl.u - Wl.a;
 	double S_TL = Wsl.u - Wsl.a;
 	double S_R = Wr.u + Wr.a * sqrt(G2 * Wsr.p / Wr.p + G1);
 	double S_HR = Wr.u + Wr.a;
 	double S_TR = Wsr.u + Wsr.a;
-	double u_star = Wsl.u;
+	
 
 	if (Wsl.p > Wl.p)
 	{
@@ -169,7 +177,7 @@ inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl,
 			else if (S < S_TR)
 				ans = Wsr;
 			else if (S < S_HR)
-				CalcWfan(Wr, S, ans);
+				CalcWfanR(Wr, S, ans);
 			else
 				ans = Wr;
 		}
@@ -183,7 +191,7 @@ inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl,
 			if (S < S_HL)
 				ans = Wl;
 			else if (S < S_TL)
-				CalcWfan(Wl, S, ans);
+				CalcWfanL(Wl, S, ans);
 			else if (S < u_star)
 				ans = Wsl;
 			else if (S < S_R)
@@ -197,13 +205,13 @@ inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl,
 			if (S < S_HL)
 				ans = Wl;
 			else if (S < S_TL)
-				CalcWfan(Wl, S, ans);
+				CalcWfanL(Wl, S, ans);
 			else if (S < u_star)
 				ans = Wsl;
 			else if (S < S_TR)
 				ans = Wsr;
 			else if (S < S_HR)
-				CalcWfan(Wr, S, ans);
+				CalcWfanR(Wr, S, ans);
 			else
 				ans = Wr;
 		}
@@ -212,17 +220,20 @@ inline void SolSample(const PrimitiveVariable &Wl, const PrimitiveVariable &Wsl,
 
 int main(int argc, char *argv[])
 {
-	PrimitiveVariable Wl, Wr;
-
 	int n = 0;
 	cin >> n;
 	for (int i = 1; i <= n; i++)
 	{
+		PrimitiveVariable Wl, Wr;
+		double dt = 0.1;
+		int NumOfStep = 201;
+
 		//Input parameters
 		try
 		{
 			cin >> Wl.rho >> Wl.u >> Wl.p;
 			cin >> Wr.rho >> Wr.u >> Wr.p;
+			cin >> dt >> NumOfStep;
 		}
 		catch (...)
 		{
@@ -336,8 +347,6 @@ int main(int argc, char *argv[])
 
 
 		cout << "\nGenerating animation data..." << endl;
-		double dt = 0.1;
-		int NumOfStep = 201;
 		vector<double> t_sample = vector<double>(NumOfStep);
 		for (int n = 0; n < NumOfStep; n++)
 			t_sample[n] = n * dt;
