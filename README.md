@@ -13,5 +13,9 @@ Different schemes are employed for comparison
 > * CIR  
 > * Lax-Friedrichs  
 > * Lax-Wendroff  
-> * Warming and Beam  
+> * Warming-Beam  
 > * Godunov  
+Usage:  
+> * Compile: `g++ main.cc -o a.out`  
+> * Execute: `./a.out`  
+> * Plot: `python animate.py`
