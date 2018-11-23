@@ -23,6 +23,7 @@ double u0(double x)
 
 const int NumOfPnt = 101;
 const double xL = -1.0, xR = 1.0;
+const double L = xR - xL;
 const double dx = (xR - xL)/(NumOfPnt - 1);
 vector<double> x(NumOfPnt, 0.f);
 vector<double> u_prev(NumOfPnt+2, 0.f);
@@ -31,7 +32,7 @@ vector<double> u_cur(NumOfPnt+2, 0.f);
 const int NumOfStep = 12500;
 const double dt = CFL * dx / a;
 
-void output(ofstream &f, const vector<double> &x)
+void write_u(ofstream &f, const vector<double> &x)
 {
     const int n = x.size()-1;
 
@@ -41,32 +42,22 @@ void output(ofstream &f, const vector<double> &x)
     f << endl;
 }
 
-int main(int argc, char *argv[])
+void write_x(ofstream &f, const vector<double> &x)
 {
-    cout << "===================================================" << endl;
-    cout << "Numerical solution of the Linear Advection Problem:" <<endl; 
-    cout << "\t u_t + a * u_x = 0"<<endl; 
-    cout << "with smooth initial velocity profile."<<endl;
+    f << x[0];
+    for(int k = 1; k < NumOfPnt; k++)
+        f << '\t' << x[k];
+    f << endl;
+}
 
-    //Grid coordinate & initial velocity profile
-    x[0] = xL;
-    for(int i = 1; i < NumOfPnt; i++)
-        x[i] = x[i-1] + dx;
-
-    //Scheme Coefs
-    double b_l2 = 0, b_l1 = 0, b_0 = 0, b_r1 = 0;
-
-    ofstream fout;
-
-    cout << "========================CIR========================" << endl;
-    fout.open("CIR.txt");
+void Exact()
+{
+    ofstream fout("Exact.txt");
     if(!fout)
-        throw "Failed to create output file!\n";
+        throw "Failed to create write_u file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
-    for(int k = 0; k < NumOfPnt; k++)
-        fout << x[k] << '\t';
-    fout << endl;
+    write_x(fout, x);
 
     //IC
     for(int i = 1; i <= NumOfPnt; i++)
@@ -76,14 +67,58 @@ int main(int argc, char *argv[])
     u_prev[0] = u_prev[NumOfPnt];
     u_prev[NumOfPnt+1] = u_prev[1];
 
-    output(fout, u_prev);
+    write_u(fout, u_prev);
 
-    double a_plus = (a + abs(a))/2, a_minus = (a - abs(a))/2;
-    double c_plus = dt * a_plus / dx, c_minus = dt * a_minus / dx;
+    //Iterate over time
+    double t = 0;
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        t += dt;
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            double x_origin = x[i-1] - a * t;
+            while (x_origin < xL)
+                x_origin += L;
+            while (x_origin > xR)
+                x_origin -= L;
+            u_cur[i] = u0(x_origin);
+        }
+        
+        //Periodical BC
+        u_cur[0] = u_cur[NumOfPnt];
+        u_cur[NumOfPnt+1] = u_cur[1];
 
-    b_l1 = c_plus;
-    b_0 = 1-abs(CFL);
-    b_r1 = -c_minus;
+        write_u(fout, u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
+
+void CIR()
+{
+    ofstream fout("CIR.txt");
+    if(!fout)
+        throw "Failed to create write_u file!\n";
+
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
+
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
+    
+    //Periodical BC
+    u_prev[0] = u_prev[NumOfPnt];
+    u_prev[NumOfPnt+1] = u_prev[1];
+
+    write_u(fout, u_prev);
+
+    const double a_plus = (a + abs(a))/2, a_minus = (a - abs(a))/2;
+    const double c_plus = dt * a_plus / dx, c_minus = dt * a_minus / dx;
+
+    const double b_l1 = c_plus;
+    const double b_0 = 1-abs(CFL);
+    const double b_r1 = -c_minus;
 
     //Iterate over time
     for(int k = 1; k < NumOfStep; k++)
@@ -95,22 +130,21 @@ int main(int argc, char *argv[])
         u_cur[0] = u_cur[NumOfPnt];
         u_cur[NumOfPnt+1] = u_cur[1];
 
-        output(fout, u_cur);
-        
+        write_u(fout, u_cur);
         u_prev.swap(u_cur);
     }
     fout.close();
     cout << "Done!" << endl;
-    
-    cout << "===================Lax-Friedrichs==================" << endl;
-    fout.open("Lax-Friedrichs.txt");
+}
+
+void Lax_Friedrichs()
+{
+    ofstream fout("Lax-Friedrichs.txt");
     if(!fout)
-        throw "Failed to create output file!\n";
+        throw "Failed to create write_u file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
-    for(int k = 0; k < NumOfPnt; k++)
-        fout << x[k] << '\t';
-    fout << endl;
+    write_x(fout, x);
 
     //IC
     for(int i = 1; i <= NumOfPnt; i++)
@@ -120,11 +154,11 @@ int main(int argc, char *argv[])
     u_prev[0] = u_prev[NumOfPnt];
     u_prev[NumOfPnt+1] = u_prev[1];
 
-    output(fout, u_prev);
+    write_u(fout, u_prev);
 
-    b_l1 = (1+CFL)/2;
-    b_0 = 0;
-    b_r1 = (1-CFL)/2;
+    const double b_l1 = (1+CFL)/2;
+    const double b_0 = 0;
+    const double b_r1 = (1-CFL)/2;
 
     //Iterate over time
     for(int k = 1; k < NumOfStep; k++)
@@ -136,22 +170,21 @@ int main(int argc, char *argv[])
         u_cur[0] = u_cur[NumOfPnt];
         u_cur[NumOfPnt+1] = u_cur[1];
 
-        output(fout, u_cur);
-        
+        write_u(fout, u_cur);
         u_prev.swap(u_cur);
     }
     fout.close();
     cout << "Done!" << endl;
+}
 
-    cout << "====================Lax-Wendroff===================" << endl;
-    fout.open("Lax-Wendroff.txt");
+void Lax_Wendroff()
+{
+    ofstream fout("Lax-Wendroff.txt");
     if(!fout)
-        throw "Failed to create output file!\n";
+        throw "Failed to create write_u file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
-    for(int k = 0; k < NumOfPnt; k++)
-        fout << x[k] << '\t';
-    fout << endl;
+    write_x(fout, x);
 
     //IC
     for(int i = 1; i <= NumOfPnt; i++)
@@ -161,11 +194,11 @@ int main(int argc, char *argv[])
     u_prev[0] = u_prev[NumOfPnt];
     u_prev[NumOfPnt+1] = u_prev[1];
 
-    output(fout, u_prev);
+    write_u(fout, u_prev);
 
-    b_l1 = CFL*(1+CFL)/2;
-    b_0 = 1-pow(CFL, 2);
-    b_r1 = -CFL*(1-CFL)/2;
+    const double b_l1 = CFL*(1+CFL)/2;
+    const double b_0 = 1-pow(CFL, 2);
+    const double b_r1 = -CFL*(1-CFL)/2;
 
     //Iterate over time
     for(int k = 1; k < NumOfStep; k++)
@@ -177,17 +210,18 @@ int main(int argc, char *argv[])
         u_cur[0] = u_cur[NumOfPnt];
         u_cur[NumOfPnt+1] = u_cur[1];
 
-        output(fout, u_cur);
-        
+        write_u(fout, u_cur);
         u_prev.swap(u_cur);
     }
     fout.close();
     cout << "Done!" << endl;
+}
 
-    cout << "====================Warming-Beam===================" << endl;
-    fout.open("Warming-Beam.txt");
+void Warming_Beam()
+{
+    ofstream fout("Warming-Beam.txt");
     if(!fout)
-        throw "Failed to create output file!\n";
+        throw "Failed to create write_u file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     for(int k = 0; k < NumOfPnt; k++)
@@ -202,11 +236,11 @@ int main(int argc, char *argv[])
     u_prev[0] = u_prev[NumOfPnt];
     u_prev[NumOfPnt+1] = u_prev[1];
 
-    output(fout, u_prev);
+    write_u(fout, u_prev);
 
-    b_l2 = CFL * (CFL - 1) / 2;
-    b_l1 = CFL * (2 - CFL);
-    b_0 = (CFL - 1) * (CFL - 2) /2;
+    const double b_l2 = CFL * (CFL - 1) / 2;
+    const double b_l1 = CFL * (2 - CFL);
+    const double b_0 = (CFL - 1) * (CFL - 2) /2;
 
     //Iterate over time
     for(int k = 1; k < NumOfStep; k++)
@@ -218,12 +252,39 @@ int main(int argc, char *argv[])
         u_cur[0] = u_cur[NumOfPnt];
         u_cur[NumOfPnt+1] = u_cur[1];
 
-        output(fout, u_cur);
-        
+        write_u(fout, u_cur);
         u_prev.swap(u_cur);
     }
     fout.close();
     cout << "Done!" << endl;
+}
+
+int main(int argc, char *argv[])
+{
+    cout << "===================================================" << endl;
+    cout << "Numerical solution of the Linear Advection Problem:" <<endl; 
+    cout << "\t u_t + a * u_x = 0"<<endl; 
+    cout << "with smooth initial velocity profile."<<endl;
+    cout << "===================================================" << endl;
+    cout << "a = " << a << endl;
+    cout << "CFL = " << CFL << endl;
+
+    //Grid coordinate & initial velocity profile
+    cout << "Init grid..." << endl;
+    x[0] = xL;
+    for(int i = 1; i < NumOfPnt; i++)
+        x[i] = x[i-1] + dx;
+
+    cout << "=======================Exact=======================" << endl;
+    Exact();
+    cout << "========================CIR========================" << endl;
+    CIR();
+    cout << "===================Lax-Friedrichs==================" << endl;
+    Lax_Friedrichs();
+    cout << "====================Lax-Wendroff===================" << endl;
+    Lax_Wendroff();
+    cout << "====================Warming-Beam===================" << endl;
+    Warming_Beam();
     cout << "=========================End=======================" << endl;
 
     return 0;
