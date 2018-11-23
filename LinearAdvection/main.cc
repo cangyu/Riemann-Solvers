@@ -54,7 +54,7 @@ void Exact()
 {
     ofstream fout("Exact.txt");
     if(!fout)
-        throw "Failed to create write_u file!\n";
+        throw "Failed to create file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     write_x(fout, x);
@@ -98,7 +98,7 @@ void CIR()
 {
     ofstream fout("CIR.txt");
     if(!fout)
-        throw "Failed to create write_u file!\n";
+        throw "Failed to create file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     write_x(fout, x);
@@ -141,7 +141,7 @@ void Lax_Friedrichs()
 {
     ofstream fout("Lax-Friedrichs.txt");
     if(!fout)
-        throw "Failed to create write_u file!\n";
+        throw "Failed to create file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     write_x(fout, x);
@@ -181,7 +181,7 @@ void Lax_Wendroff()
 {
     ofstream fout("Lax-Wendroff.txt");
     if(!fout)
-        throw "Failed to create write_u file!\n";
+        throw "Failed to create file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     write_x(fout, x);
@@ -221,7 +221,7 @@ void Warming_Beam()
 {
     ofstream fout("Warming-Beam.txt");
     if(!fout)
-        throw "Failed to create write_u file!\n";
+        throw "Failed to create file!\n";
 
     fout << NumOfStep << "\t" << NumOfPnt << endl;
     for(int k = 0; k < NumOfPnt; k++)
@@ -245,7 +245,8 @@ void Warming_Beam()
     //Iterate over time
     for(int k = 1; k < NumOfStep; k++)
     {
-        for(int i = 1; i <= NumOfPnt; i++)
+        u_cur[1] = b_l2 * u_prev[NumOfPnt-1] + b_l1 * u_prev[0] + b_0 * u_prev[1];
+        for(int i = 2; i <= NumOfPnt; i++)
             u_cur[i] = b_l2 * u_prev[i-2] + b_l1 * u_prev[i-1] + b_0 * u_prev[i];
         
         //Periodical BC
