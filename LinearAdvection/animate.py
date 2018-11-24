@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
 
-data_files = ['Exact.txt', 'CIR.txt', 'Lax-Friedrichs.txt', 'Lax-Wendroff.txt', 'Warming-Beam.txt']
+data_files = ['Exact.txt', 'CIR.txt', 'Lax-Friedrichs.txt', 'Lax-Wendroff.txt', 'Warming-Beam.txt', 'Godunov.txt']
 
 def load_data(f):
     fin = open(f, 'r')
@@ -15,7 +15,7 @@ def load_data(f):
     x = np.array([float(c) for c in fin.readline().strip().split()])
 
     all_data = []
-    for n in range(NumOfStep):
+    for _ in range(NumOfStep):
         cur_data = [float (c) for c in fin.readline().strip().split()]
         all_data.append(cur_data)
     animation_data = np.array(all_data)
@@ -30,10 +30,11 @@ if __name__ == '__main__':
     _, _, _, LF_sol = load_data(data_files[2])
     _, _, _, LW_sol = load_data(data_files[3])
     _, _, _, WB_sol = load_data(data_files[4])
+    _, _, _, God_sol = load_data(data_files[5])
 
     fig = plt.figure()
     
-    ax1 = fig.add_subplot(221)
+    ax1 = fig.add_subplot(231)
     ax1.set_ylabel(r'$u$')
     ax1.set_xlabel('X')
     line11, = ax1.plot(x, exact_sol[0, :], '-', label='Exact')
@@ -43,11 +44,12 @@ if __name__ == '__main__':
     def update1(k):
         line11.set_data(x, exact_sol[k, :])
         line12.set_data(x, CIR_sol[k, :])
+        ax1.set_title('t={}'.format(k))
         return line11, line12
 
     a1 = animation.FuncAnimation(fig, update1, range(NumOfStep))
 
-    ax2 = fig.add_subplot(222)
+    ax2 = fig.add_subplot(234)
     ax2.set_ylabel(r'$u$')
     ax2.set_xlabel('X')
     line21, = ax2.plot(x, exact_sol[0, :], '-', label='Exact')
@@ -57,11 +59,12 @@ if __name__ == '__main__':
     def update2(k):
         line21.set_data(x, exact_sol[k, :])
         line22.set_data(x, LF_sol[k, :])
+        ax2.set_title('t={}'.format(k))
         return line21, line22
 
     a2 = animation.FuncAnimation(fig, update2, range(NumOfStep))
 
-    ax3 = fig.add_subplot(223)
+    ax3 = fig.add_subplot(235)
     ax3.set_ylabel(r'$u$')
     ax3.set_xlabel('X')
     line31, = ax3.plot(x, exact_sol[0, :], '-', label='Exact')
@@ -71,11 +74,12 @@ if __name__ == '__main__':
     def update3(k):
         line31.set_data(x, exact_sol[k, :])
         line32.set_data(x, LW_sol[k, :])
+        ax3.set_title('t={}'.format(k))
         return line31, line32
 
     a3 = animation.FuncAnimation(fig, update3, range(NumOfStep))
 
-    ax4 = fig.add_subplot(224)
+    ax4 = fig.add_subplot(236)
     ax4.set_ylabel(r'$u$')
     ax4.set_xlabel('X')
     line41, = ax4.plot(x, exact_sol[0, :], '-', label='Exact')
@@ -85,9 +89,40 @@ if __name__ == '__main__':
     def update4(k):
         line41.set_data(x, exact_sol[k, :])
         line42.set_data(x, WB_sol[k, :])
+        ax4.set_title('t={}'.format(k))
         return line41, line42
 
     a4 = animation.FuncAnimation(fig, update4, range(NumOfStep))
+
+    ax5 = fig.add_subplot(232)
+    ax5.set_ylabel(r'$u$')
+    ax5.set_xlabel('X')
+    line51, = ax5.plot(x, exact_sol[0, :], '-', label='Exact')
+    line52, = ax5.plot(x, God_sol[0, :], '-.', label='Godunov')
+    ax5.legend()
+    
+    def update5(k):
+        line51.set_data(x, exact_sol[k, :])
+        line52.set_data(x, God_sol[k, :])
+        ax5.set_title('t={}'.format(k))
+        return line51, line52
+
+    a5 = animation.FuncAnimation(fig, update5, range(NumOfStep))
+
+    ax6 = fig.add_subplot(233)
+    ax6.set_ylabel(r'$u$')
+    ax6.set_xlabel('X')
+    line61, = ax6.plot(x, CIR_sol[0, :], '-', label='CIR')
+    line62, = ax6.plot(x, God_sol[0, :], '-', label='Godunov')
+    ax6.legend()
+    
+    def update6(k):
+        line61.set_data(x, CIR_sol[k, :])
+        line62.set_data(x, God_sol[k, :])
+        ax6.set_title('t={}'.format(k))
+        return line61, line62
+
+    a6 = animation.FuncAnimation(fig, update6, range(NumOfStep))
 
     plt.tight_layout()
     plt.show()

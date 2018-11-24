@@ -260,6 +260,55 @@ void Warming_Beam()
     cout << "Done!" << endl;
 }
 
+double flux(double u)
+{
+    return a * u;
+}
+
+void Godunov()
+{
+    ofstream fout("Godunov.txt");
+    if(!fout)
+        throw "Failed to create file!\n";
+
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
+
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
+    
+    //Periodical BC
+    u_prev[0] = u_prev[NumOfPnt];
+    u_prev[NumOfPnt+1] = u_prev[1];
+
+    write_u(fout, u_prev);
+
+    //Iterate over time
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            double godunov_flux = 0;
+            if (a > 0)
+                godunov_flux = flux(u_prev[i-1]) - flux(u_prev[i]);
+            else
+                godunov_flux = flux(u_prev[i]) - flux(u_prev[i+1]);
+
+            u_cur[i] = u_prev[i] + dt/dx * godunov_flux;
+        }
+        
+        //Periodical BC
+        u_cur[0] = u_cur[NumOfPnt];
+        u_cur[NumOfPnt+1] = u_cur[1];
+
+        write_u(fout, u_cur);
+        u_prev.swap(u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
+
 int main(int argc, char *argv[])
 {
     cout << "===================================================" << endl;
@@ -286,6 +335,8 @@ int main(int argc, char *argv[])
     Lax_Wendroff();
     cout << "====================Warming-Beam===================" << endl;
     Warming_Beam();
+    cout << "=======================Godunov=====================" << endl;
+    Godunov();
     cout << "=========================End=======================" << endl;
 
     return 0;
