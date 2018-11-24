@@ -74,6 +74,13 @@ if __name__ == '__main__':
     def update3(k):
         line31.set_data(x, exact_sol[k, :])
         line32.set_data(x, LW_sol[k, :])
+
+        upper = max(LW_sol[k, :])
+        lower = min(LW_sol[k, :])
+        gap = upper - lower
+        margin_ratio = 0.05
+        ax3.set_ylim(lower-margin_ratio*gap, upper+margin_ratio*gap)
+
         ax3.set_title('t={}'.format(k))
         return line31, line32
 
@@ -89,6 +96,13 @@ if __name__ == '__main__':
     def update4(k):
         line41.set_data(x, exact_sol[k, :])
         line42.set_data(x, WB_sol[k, :])
+
+        upper = max(WB_sol[k, :])
+        lower = min(WB_sol[k, :])
+        gap = upper - lower
+        margin_ratio = 0.05
+        ax4.set_ylim(lower-margin_ratio*gap, upper+margin_ratio*gap)
+
         ax4.set_title('t={}'.format(k))
         return line41, line42
 
