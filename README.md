@@ -15,6 +15,7 @@ Different schemes are employed for comparison
 > * Lax-Wendroff  
 > * Warming-Beam  
 > * Godunov  
+
 Usage:  
 > * Compile: `g++ main.cc -o a.out`  
 > * Execute: `./a.out`  
