@@ -34,17 +34,33 @@ if __name__ == '__main__':
         ax = fig.add_subplot(111)
         ax.set_ylabel(r'$u$')
         ax.set_xlabel('X')
-        ax.set_title(os.path.splitext(f)[0])
+        lb = os.path.splitext(f)[0]
+        line, = ax.plot(x, animation_data[0, :], '^', label=lb)
+        ax.legend()
 
-        line, = ax.plot(x, animation_data[0, :])
+        cnt = 1
 
         def update(data):
-            cur_data = data
-            #ax.set_ylim(-0.05, 1.05)
-            line.set_ydata(cur_data)
+            global cnt
+
+            lower = min(data)
+            upper = max(data)
+            gap = upper - lower
+            margin = 0.05
+            bottom_lim = lower - gap * margin
+            top_lim = upper + gap * margin
+            ax.set_ylim(bottom_lim, top_lim)
+
+            line.set_ydata(data)
+            
+            ax.set_title('t = {}'.format(cnt))
+            if cnt == 32:
+                plt.savefig('{}.png'.format(lb))
+
+            cnt = cnt + 1
+            
             return line
 
         a = animation.FuncAnimation(fig, update, animation_data)
 
-        plt.tight_layout()
         plt.show()

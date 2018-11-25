@@ -1,8 +1,12 @@
 import os
 
 def action():
-    os.system('rm *.txt')
-    os.system('rm *.out')
+    r = os.getcwd()
+    for f in os.listdir(r):
+        if os.path.isfile(f):
+            _, ext = os.path.splitext(f)
+            if ext in ['.txt', '.out', '.exe', '.png']:
+                os.remove(f)
 
 
 def clean(root_dir):

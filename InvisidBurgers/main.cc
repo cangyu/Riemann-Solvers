@@ -23,7 +23,9 @@ const int NumOfPnt = 76;
 const double xL = 0, xR = 1.5;
 const double L = xR - xL;
 const double dx = L/(NumOfPnt - 1);
+
 vector<double> x(NumOfPnt, 0.f);
+
 vector<double> u_prev(NumOfPnt+2, 0.f);
 vector<double> u_cur(NumOfPnt+2, 0.f);
 
@@ -47,92 +49,93 @@ void write_x(ofstream &f, const vector<double> &x)
     f << endl;
 }
 
-/* void Exact()
-{
-    ofstream fout("Exact.txt");
-    if(!fout)
-        throw "Failed to create file!\n";
+// void Exact()
+// {
+//     ofstream fout("Exact.txt");
+//     if(!fout)
+//         throw "Failed to create file!\n";
 
-    fout << NumOfStep << "\t" << NumOfPnt << endl;
-    write_x(fout, x);
+//     fout << NumOfStep << "\t" << NumOfPnt << endl;
+//     write_x(fout, x);
 
-    //IC
-    for(int i = 1; i <= NumOfPnt; i++)
-        u_prev[i] = u0(x[i-1]);
+//     //IC
+//     for(int i = 1; i <= NumOfPnt; i++)
+//         u_prev[i] = u0(x[i-1]);
     
-    //Periodical BC
-    u_prev[0] = u_prev[NumOfPnt];
-    u_prev[NumOfPnt+1] = u_prev[1];
+//     //Periodical BC
+//     u_prev[0] = u_prev[NumOfPnt];
+//     u_prev[NumOfPnt+1] = u_prev[1];
 
-    write_u(fout, u_prev);
+//     write_u(fout, u_prev);
 
-    //Iterate over time
-    double t = 0;
-    for(int k = 1; k < NumOfStep; k++)
-    {
-        t += dt;
-        for(int i = 1; i <= NumOfPnt; i++)
-        {
-            double x_origin = x[i-1] - a * t;
-            while (x_origin < xL)
-                x_origin += L;
-            while (x_origin > xR)
-                x_origin -= L;
-            u_cur[i] = u0(x_origin);
-        }
+//     //Iterate over time
+//     double t = 0;
+//     for(int k = 1; k < NumOfStep; k++)
+//     {
+//         t += dt;
+//         for(int i = 1; i <= NumOfPnt; i++)
+//         {
+//             double x_origin = x[i-1] - a * t;
+//             while (x_origin < xL)
+//                 x_origin += L;
+//             while (x_origin > xR)
+//                 x_origin -= L;
+//             u_cur[i] = u0(x_origin);
+//         }
         
-        //Periodical BC
-        u_cur[0] = u_cur[NumOfPnt];
-        u_cur[NumOfPnt+1] = u_cur[1];
+//         //Periodical BC
+//         u_cur[0] = u_cur[NumOfPnt];
+//         u_cur[NumOfPnt+1] = u_cur[1];
 
-        write_u(fout, u_cur);
-    }
-    fout.close();
-    cout << "Done!" << endl;
-}
+//         write_u(fout, u_cur);
+//     }
+//     fout.close();
+//     cout << "Done!" << endl;
+// }
 
-void CIR()
-{
-    ofstream fout("CIR.txt");
-    if(!fout)
-        throw "Failed to create file!\n";
 
-    fout << NumOfStep << "\t" << NumOfPnt << endl;
-    write_x(fout, x);
+// void CIR()
+// {
+//     ofstream fout("CIR.txt");
+//     if(!fout)
+//         throw "Failed to create file!\n";
 
-    //IC
-    for(int i = 1; i <= NumOfPnt; i++)
-        u_prev[i] = u0(x[i-1]);
+//     fout << NumOfStep << "\t" << NumOfPnt << endl;
+//     write_x(fout, x);
+
+//     //IC
+//     for(int i = 1; i <= NumOfPnt; i++)
+//         u_prev[i] = u0(x[i-1]);
     
-    //Periodical BC
-    u_prev[0] = u_prev[NumOfPnt];
-    u_prev[NumOfPnt+1] = u_prev[1];
+//     //Periodical BC
+//     u_prev[0] = u_prev[NumOfPnt];
+//     u_prev[NumOfPnt+1] = u_prev[1];
 
-    write_u(fout, u_prev);
+//     write_u(fout, u_prev);
 
-    const double a_plus = (a + abs(a))/2, a_minus = (a - abs(a))/2;
-    const double c_plus = dt * a_plus / dx, c_minus = dt * a_minus / dx;
+//     const double a_plus = (a + abs(a))/2, a_minus = (a - abs(a))/2;
+//     const double c_plus = dt * a_plus / dx, c_minus = dt * a_minus / dx;
 
-    const double b_l1 = c_plus;
-    const double b_0 = 1-abs(CFL);
-    const double b_r1 = -c_minus;
+//     const double b_l1 = c_plus;
+//     const double b_0 = 1-abs(CFL);
+//     const double b_r1 = -c_minus;
 
-    //Iterate over time
-    for(int k = 1; k < NumOfStep; k++)
-    {
-        for(int i = 1; i <= NumOfPnt; i++)
-            u_cur[i] = b_l1 * u_prev[i-1] + b_0 * u_prev[i] + b_r1 * u_prev[i+1];
+//     //Iterate over time
+//     for(int k = 1; k < NumOfStep; k++)
+//     {
+//         for(int i = 1; i <= NumOfPnt; i++)
+//             u_cur[i] = b_l1 * u_prev[i-1] + b_0 * u_prev[i] + b_r1 * u_prev[i+1];
         
-        //Periodical BC
-        u_cur[0] = u_cur[NumOfPnt];
-        u_cur[NumOfPnt+1] = u_cur[1];
+//         //Periodical BC
+//         u_cur[0] = u_cur[NumOfPnt];
+//         u_cur[NumOfPnt+1] = u_cur[1];
 
-        write_u(fout, u_cur);
-        u_prev.swap(u_cur);
-    }
-    fout.close();
-    cout << "Done!" << endl;
-}
+//         write_u(fout, u_cur);
+//         u_prev.swap(u_cur);
+//     }
+//     fout.close();
+//     cout << "Done!" << endl;
+// }
 
 void Lax_Friedrichs()
 {
@@ -147,9 +150,9 @@ void Lax_Friedrichs()
     for(int i = 1; i <= NumOfPnt; i++)
         u_prev[i] = u0(x[i-1]);
     
-    //Periodical BC
-    u_prev[0] = u_prev[NumOfPnt];
-    u_prev[NumOfPnt+1] = u_prev[1];
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
 
     write_u(fout, u_prev);
 
@@ -163,9 +166,9 @@ void Lax_Friedrichs()
         for(int i = 1; i <= NumOfPnt; i++)
             u_cur[i] = b_l1 * u_prev[i-1] + b_r1 * u_prev[i+1];
         
-        //Periodical BC
-        u_cur[0] = u_cur[NumOfPnt];
-        u_cur[NumOfPnt+1] = u_cur[1];
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
 
         write_u(fout, u_cur);
         u_prev.swap(u_cur);
@@ -187,9 +190,9 @@ void Lax_Wendroff()
     for(int i = 1; i <= NumOfPnt; i++)
         u_prev[i] = u0(x[i-1]);
     
-    //Periodical BC
-    u_prev[0] = u_prev[NumOfPnt];
-    u_prev[NumOfPnt+1] = u_prev[1];
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
 
     write_u(fout, u_prev);
 
@@ -203,9 +206,9 @@ void Lax_Wendroff()
         for(int i = 1; i <= NumOfPnt; i++)
             u_cur[i] = b_l1 * u_prev[i-1] + b_0 * u_prev[i] + b_r1 * u_prev[i+1];
         
-        //Periodical BC
-        u_cur[0] = u_cur[NumOfPnt];
-        u_cur[NumOfPnt+1] = u_cur[1];
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
 
         write_u(fout, u_cur);
         u_prev.swap(u_cur);
@@ -229,9 +232,9 @@ void Warming_Beam()
     for(int i = 1; i <= NumOfPnt; i++)
         u_prev[i] = u0(x[i-1]);
     
-    //Periodical BC
-    u_prev[0] = u_prev[NumOfPnt];
-    u_prev[NumOfPnt+1] = u_prev[1];
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
 
     write_u(fout, u_prev);
 
@@ -246,16 +249,16 @@ void Warming_Beam()
         for(int i = 2; i <= NumOfPnt; i++)
             u_cur[i] = b_l2 * u_prev[i-2] + b_l1 * u_prev[i-1] + b_0 * u_prev[i];
         
-        //Periodical BC
-        u_cur[0] = u_cur[NumOfPnt];
-        u_cur[NumOfPnt+1] = u_cur[1];
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
 
         write_u(fout, u_cur);
         u_prev.swap(u_cur);
     }
     fout.close();
     cout << "Done!" << endl;
-} */
+}
 
 inline double flux(double u)
 {
@@ -290,7 +293,7 @@ double intermediate_u(double ul, double ur)
 
 double intercell_speed(double ul, double ur)
 {
-    if(ul>=ur)
+    if(ul >= ur)
         return abs(ul + ur)/2;
     else
         return max(abs(ul), abs(ur));
@@ -359,16 +362,16 @@ int main(int argc, char *argv[])
     for(int i = 1; i < NumOfPnt; i++)
         x[i] = x[i-1] + dx;
 
-    //cout << "=======================Exact=======================" << endl;
+    cout << "=======================Exact=======================" << endl;
     //Exact();
-    //cout << "========================CIR========================" << endl;
+    cout << "========================CIR========================" << endl;
     //CIR();
-    //cout << "===================Lax-Friedrichs==================" << endl;
-    //Lax_Friedrichs();
-    //cout << "====================Lax-Wendroff===================" << endl;
-    //Lax_Wendroff();
-    //cout << "====================Warming-Beam===================" << endl;
-    //Warming_Beam();
+    cout << "===================Lax-Friedrichs==================" << endl;
+    Lax_Friedrichs();
+    cout << "====================Lax-Wendroff===================" << endl;
+    Lax_Wendroff();
+    cout << "====================Warming-Beam===================" << endl;
+    Warming_Beam();
     cout << "=======================Godunov=====================" << endl;
     Godunov();
     cout << "=========================End=======================" << endl;
