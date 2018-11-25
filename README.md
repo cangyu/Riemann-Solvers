@@ -17,6 +17,6 @@ Different schemes are employed for comparison
 > * Godunov  
 
 Usage:  
-> * Compile: `g++ main.cc -o a.out`  
+> * Compile: `g++ smooth.cc -o a.out`  or `g++ discontinuous.cc -o a.out` 
 > * Execute: `./a.out`  
 > * Plot: `python animate.py`
