@@ -17,6 +17,19 @@ Different schemes are employed for comparison
 > * Godunov  
 
 Usage:  
-> * Compile: `g++ smooth.cc -o a.out`  or `g++ discontinuous.cc -o a.out` 
+> * Compile: `g++ smooth.cc -o a.out` or `g++ discontinuous.cc -o a.out` 
 > * Execute: `./a.out`  
 > * Plot: `python animate.py`
+
+## Invisid Burgers Equation
+Different schemes are employed for comparison
+> * CIR  
+> * Lax-Friedrichs  
+> * Lax-Wendroff  
+> * Warming-Beam  
+> * Godunov  
+
+Usage:  
+> * Compile: `g++ main.cc -o a.out`
+> * Execute: `./a.out`  
+> * Plot: `python animate_single.py` or `python animate_all.py`
