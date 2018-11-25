@@ -9,14 +9,46 @@ using namespace std;
 
 const double CFL = 0.8;
 
+const double x1 = 0.5, x2 = 1.0;
+const double u1 = -0.5, u2 = 1.0, u3 = 0.0;
+const double S = (u2 + u3)/2;
 double u0(double x)
 {
-    if (x <= 0.5)
-        return -0.5;
-    else if(x <= 1.0)
-        return 1;
+    if (x <= x1)
+        return u1;
+    else if(x <= x2)
+        return u2;
     else
-        return 0;
+        return u3;
+}
+
+double exact_riemann(double x, double t)
+{
+    const double xb1 = x1 + u1 * t;
+    const double xb2 = x1 + u2 * t;
+    const double xb3 = x2 + S * t;
+
+    if (x <= xb1)
+        return u1;
+    else
+    {
+        if(xb2 <= xb3)
+        {
+            if(x <= xb2)
+                return u1 + (x - xb1)/(xb2 - xb1) * (u2 - u1);
+            else if(x <= xb3)
+                return u2;
+            else
+                return u3;
+        }
+        else
+        {
+            if(x <= xb3)
+                return u1 + (x - xb1)/(xb3 - xb1) * (u2 - u1);
+            else
+                return u3;
+        }
+    }
 }
 
 const int NumOfPnt = 76;
@@ -30,6 +62,7 @@ vector<double> u_prev(NumOfPnt+2, 0.f);
 vector<double> u_cur(NumOfPnt+2, 0.f);
 
 const int NumOfStep = 12500;
+const double dt = CFL * dx / u2;
 
 void write_u(ofstream &f, const vector<double> &x)
 {
@@ -49,93 +82,85 @@ void write_x(ofstream &f, const vector<double> &x)
     f << endl;
 }
 
-// void Exact()
-// {
-//     ofstream fout("Exact.txt");
-//     if(!fout)
-//         throw "Failed to create file!\n";
+void Exact()
+{
+    ofstream fout("Exact.txt");
+    if(!fout)
+        throw "Failed to create file!\n";
 
-//     fout << NumOfStep << "\t" << NumOfPnt << endl;
-//     write_x(fout, x);
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
 
-//     //IC
-//     for(int i = 1; i <= NumOfPnt; i++)
-//         u_prev[i] = u0(x[i-1]);
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
     
-//     //Periodical BC
-//     u_prev[0] = u_prev[NumOfPnt];
-//     u_prev[NumOfPnt+1] = u_prev[1];
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
 
-//     write_u(fout, u_prev);
+    write_u(fout, u_prev);
 
-//     //Iterate over time
-//     double t = 0;
-//     for(int k = 1; k < NumOfStep; k++)
-//     {
-//         t += dt;
-//         for(int i = 1; i <= NumOfPnt; i++)
-//         {
-//             double x_origin = x[i-1] - a * t;
-//             while (x_origin < xL)
-//                 x_origin += L;
-//             while (x_origin > xR)
-//                 x_origin -= L;
-//             u_cur[i] = u0(x_origin);
-//         }
+    //Iterate over time
+    double t = 0;
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        t += dt;
+        for(int i = 1; i <= NumOfPnt; i++)
+            u_cur[i] = exact_riemann(x[i-1], t);
         
-//         //Periodical BC
-//         u_cur[0] = u_cur[NumOfPnt];
-//         u_cur[NumOfPnt+1] = u_cur[1];
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
 
-//         write_u(fout, u_cur);
-//     }
-//     fout.close();
-//     cout << "Done!" << endl;
-// }
+        write_u(fout, u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
 
 
-// void CIR()
-// {
-//     ofstream fout("CIR.txt");
-//     if(!fout)
-//         throw "Failed to create file!\n";
+void CIR()
+{
+    //Upwind
+    ofstream fout("CIR.txt");
+    if(!fout)
+        throw "Failed to create file!\n";
 
-//     fout << NumOfStep << "\t" << NumOfPnt << endl;
-//     write_x(fout, x);
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
 
-//     //IC
-//     for(int i = 1; i <= NumOfPnt; i++)
-//         u_prev[i] = u0(x[i-1]);
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
     
-//     //Periodical BC
-//     u_prev[0] = u_prev[NumOfPnt];
-//     u_prev[NumOfPnt+1] = u_prev[1];
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
 
-//     write_u(fout, u_prev);
+    write_u(fout, u_prev);
 
-//     const double a_plus = (a + abs(a))/2, a_minus = (a - abs(a))/2;
-//     const double c_plus = dt * a_plus / dx, c_minus = dt * a_minus / dx;
-
-//     const double b_l1 = c_plus;
-//     const double b_0 = 1-abs(CFL);
-//     const double b_r1 = -c_minus;
-
-//     //Iterate over time
-//     for(int k = 1; k < NumOfStep; k++)
-//     {
-//         for(int i = 1; i <= NumOfPnt; i++)
-//             u_cur[i] = b_l1 * u_prev[i-1] + b_0 * u_prev[i] + b_r1 * u_prev[i+1];
+    //Iterate over time
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            if(u_prev[i] > 0)
+                u_cur[i] = u_prev[i] - dt * u_prev[i] * (u_prev[i] - u_prev[i-1]) / dx;
+            else
+                u_cur[i] = u_prev[i] - dt * u_prev[i] * (u_prev[i+1] - u_prev[i]) / dx;
+        }
         
-//         //Periodical BC
-//         u_cur[0] = u_cur[NumOfPnt];
-//         u_cur[NumOfPnt+1] = u_cur[1];
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
 
-//         write_u(fout, u_cur);
-//         u_prev.swap(u_cur);
-//     }
-//     fout.close();
-//     cout << "Done!" << endl;
-// }
+        write_u(fout, u_cur);
+        u_prev.swap(u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
 
 void Lax_Friedrichs()
 {
@@ -363,9 +388,9 @@ int main(int argc, char *argv[])
         x[i] = x[i-1] + dx;
 
     cout << "=======================Exact=======================" << endl;
-    //Exact();
+    Exact();
     cout << "========================CIR========================" << endl;
-    //CIR();
+    CIR();
     cout << "===================Lax-Friedrichs==================" << endl;
     Lax_Friedrichs();
     cout << "====================Lax-Wendroff===================" << endl;
