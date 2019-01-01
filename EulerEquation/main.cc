@@ -1,4 +1,4 @@
-#include <fstream>
+#include <iostream>
 #include <cmath>
 
 const double G0 = 1.4;
@@ -29,7 +29,7 @@ double internal_energy(double p, double rho)
 
 class PrimitiveVar
 {
-private:
+public:
     double rho, u, p;
     double a, e;
 
@@ -43,6 +43,13 @@ public:
         e = internal_energy(p, rho);
     }
 
+    PrimitiveVar(istream &in)
+    {
+        in >> rho >> u >> p;
+        a = sound_speed(p, rho);
+        e = internal_energy(p, rho);
+    }
+
     ~PrimitiveVar() {}
 };
 
@@ -50,7 +57,6 @@ void RiemannSolver(const PrimitiveVar &left, const PrimitiveVar &Wr, double S, d
 {
 
 }
-
 
 class InterCellPnt
 {
@@ -69,9 +75,18 @@ public:
 
 int main(int argc, char **argv)
 {
-    ifstream fin('inp.txt');
+	int n;
+    double dt;
+    int NumOfStep;
 
-    fin.close();
-
-    return 0;
+	cin >> n;
+	for(int k = 0; k < n; ++k)
+	{    
+		PrimitiveVar Wl(cin), Wr(cin);
+        cin >> dt >> NumOfStep;
+        cout << Wl.rho << '\t' << Wl.u << '\t' << Wl.p << endl;
+        cout << Wr.rho << '\t' << Wr.u << '\t' << Wr.p << endl;
+	}
+	
+	return 0;
 }
