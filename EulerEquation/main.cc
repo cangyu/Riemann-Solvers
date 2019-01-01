@@ -20,12 +20,12 @@ const double G12 = 1 / G0;
 
 using namespace std;
 
-double sound_speed(double p, double rho)
+inline double sound_speed(double p, double rho)
 {
     return sqrt(G0 * p / rho);
 }
 
-double internal_energy(double p, double rho)
+inline double internal_energy(double p, double rho)
 {
     return p / (G8 * rho);
 }
@@ -126,22 +126,7 @@ inline double ddf(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
     return ddfk(p, Wl) + ddfk(p, Wr);
 }
 
-inline double u_star(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
-{
-    return (Wl.u + Wr.u) / 2 + (fk(p, Wr) - fk(p, Wl)) / 2;
-}
-
-inline double rho_star(double p, const PrimitiveVar &W)
-{
-	double t = p / W.p;
-
-	if (t > 1.0)
-		return W.rho * ((t + G6) / (G6*t + 1));
-	else
-		return W.rho * pow(t, G12);
-}
-
-void Riemann(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double &p_s, double &u_s, double &rho_sL, double &rho_sR)
+double p_star(const PrimitiveVar &Wl, const PrimitiveVar &Wr)
 {
     const double TOL = 1e-6;
     const double du = Wr.u - Wl.u;
@@ -156,8 +141,8 @@ void Riemann(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double &p_s, double
     double p_pv = p_m - du * (Wl.rho + Wr.rho)*(Wl.a + Wr.a) / 8;
     p_pv = max(TOL, p_pv);
 
-    double gL = gk(p_pv, Wl);
-    double gR = gk(p_pv, Wr);
+    const double gL = gk(p_pv, Wl);
+    const double gR = gk(p_pv, Wr);
     double p_ts = (gL * Wl.p + gR * Wr.p - du) / (gL + gR);
     p_ts = max(TOL, p_ts);
 
@@ -172,7 +157,7 @@ void Riemann(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double &p_s, double
     else
         p0 = p_pv;
 
-    //Solve p_star
+    //Solve
     int iter_cnt = 0;
     double CHA = 1.0;
     while (CHA > TOL)
@@ -195,14 +180,23 @@ void Riemann(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double &p_s, double
         CHA = abs(2 * (p - p0) / (p + p0));
         p0 = p;
     }
-    p_s = p0;
 
-    //Solve u_star
-    u_s = u_star(p_s, Wl, Wr);
+    return p0;
+}
 
-    //Solve rho_star
-    rho_sL = rho_star(p_s, Wl);
-    rho_sR = rho_star(p_s, Wr);
+inline double u_star(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
+{
+    return (Wl.u + Wr.u) / 2 + (fk(p, Wr) - fk(p, Wl)) / 2;
+}
+
+inline double rho_star(double p, const PrimitiveVar &W)
+{
+	double t = p / W.p;
+
+	if (t > 1.0)
+		return W.rho * ((t + G6) / (G6*t + 1));
+	else
+		return W.rho * pow(t, G12);
 }
 
 class InterCellPnt
@@ -214,7 +208,11 @@ private:
 public:
     InterCellPnt(const PrimitiveVar &left, const PrimitiveVar &right):Wl(left), Wr(right)
     {
-        Riemann(left, right, p_s, u_s, rho_sL, rho_sR);
+        //Get the exact solution
+        p_s = p_star(left, right);
+        u_s = u_star(p_s, left, right);
+        rho_sL = rho_star(p_s, left);
+        rho_sR = rho_star(p_s, right);
     }
 
     ~InterCellPnt() {}
