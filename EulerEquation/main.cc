@@ -30,6 +30,11 @@ inline double internal_energy(double p, double rho)
     return p / (G8 * rho);
 }
 
+inline double kinetic_energy(double u)
+{
+    return 0.5 * pow(u, 2);
+}
+
 class PrimitiveVar
 {
 public:
@@ -126,6 +131,8 @@ inline double ddf(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
     return ddfk(p, Wl) + ddfk(p, Wr);
 }
 
+//Exact solution of then 1-D Euler equation
+//Namely the Riemann problem, where initial discontinuity exists
 double p_star(const PrimitiveVar &Wl, const PrimitiveVar &Wr)
 {
     const double TOL = 1e-6;
@@ -199,23 +206,158 @@ inline double rho_star(double p, const PrimitiveVar &W)
 		return W.rho * pow(t, G12);
 }
 
-class InterCellPnt
+inline double E(const PrimitiveVar &W)
+{
+    return W.rho * (internal_energy(W.p, W.rho) + kinetic_energy(W.u));
+}
+
+inline double E(double density, double velocity, double pressure)
+{
+    return density * (internal_energy(pressure, density) + kinetic_energy(velocity));
+}
+
+class ConservativeVar
+{
+public:
+    double u[3];
+
+public:
+    ConservativeVar() 
+    {
+        set_param(1.0, 0.0, 101325.0);
+    }
+
+    ConservativeVar(const PrimitiveVar &x)
+    {
+        set_param(x.rho, x.u, x.p);
+    }
+
+    ~ConservativeVar() {}
+
+    void set_param(double density, double velocity, double pressure)
+    {
+        u[0] = density;
+        u[1] = density * velocity;
+        u[2] = E(density, velocity, pressure);
+    }
+};
+
+class FluxVar
+{
+public:
+    double flux[3];
+
+public:
+    FluxVar() 
+    {
+        flux[0] = flux[1] = flux[2] = 0.0;
+    }
+
+    FluxVar(const PrimitiveVar &W)
+    {
+        flux[0] = W.rho * W.u;
+        flux[1] = W.rho * pow(W.u, 2) + W.p;
+        flux[2] = W.u * (E(W) + W.p);
+    }
+
+    ~FluxVar() {}
+};
+
+void W_fanL(PrimitiveVar *W, double S, PrimitiveVar &ans)
+{
+    double density = W->rho * pow(G5 + G6 / W->a *(W->u - S), G4);
+	double velocity = G5 * (W->a + G7 * W->u + S);
+	double pressure = W->p * pow(G5 + G6 / W->a * (W->u - S), G3);
+    ans.set_param(density, velocity, pressure);
+}
+
+void W_fanR(PrimitiveVar *W, double S, PrimitiveVar &ans)
+{
+	double density = W->rho * pow(G5 - G6 / W->a *(W->u - S), G4);
+	double velocity = G5 * (-W->a + G7 * W->u + S);
+	double pressure = W->p * pow(G5 - G6 / W->a * (W->u - S), G3);
+    ans.set_param(density, velocity, pressure);
+}
+
+class InterCell
 {
 private:
-    PrimitiveVar Wl, Wr;
+    PrimitiveVar *Wl, *Wr;
     double p_s, u_s, rho_sL, rho_sR;
 
 public:
-    InterCellPnt(const PrimitiveVar &left, const PrimitiveVar &right):Wl(left), Wr(right)
+    InterCell(PrimitiveVar *left, PrimitiveVar *right):Wl(left), Wr(right)
     {
         //Get the exact solution
-        p_s = p_star(left, right);
-        u_s = u_star(p_s, left, right);
-        rho_sL = rho_star(p_s, left);
-        rho_sR = rho_star(p_s, right);
+        p_s = p_star(*left, *right);
+        u_s = u_star(p_s, *left, *right);
+        rho_sL = rho_star(p_s, *left);
+        rho_sR = rho_star(p_s, *right);
     }
 
-    ~InterCellPnt() {}
+    ~InterCell() {}
+
+    //Solution of the Riemann Problem
+    //10 possible wave patterns
+    void RP(double S, PrimitiveVar &ans)
+    {
+        if(S < u_s)
+        {
+            //At the left of the contact discontinuity
+            if(p_s > Wl->p)
+            {
+                //Left shock
+                double S_L = Wl->u - Wl->a * sqrt(G2 * p_s / Wl->p + G1);
+                if(S < S_L)
+                    ans = *Wl;
+                else
+                    ans.set_param(rho_sL, u_s, p_s);
+            }
+            else
+            {
+                //Left fan
+                double S_HL = Wl->u - Wl->a;
+                if (S < S_HL)
+                    ans = *Wl;
+                else
+                {
+                    double S_TL = u_s - sound_speed(p_s, rho_sL);
+                    if(S > S_TL)
+                        ans.set_param(rho_sL, u_s, p_s);
+                    else
+                        W_fanL(Wl, S, ans);
+                }
+            }
+        }
+        else
+        {
+            //At the right of the contact discontinuity
+            if(p_s > Wr->p)
+            {
+                //Right shock
+                double S_R = Wr->u + Wr->a * sqrt(G2 * p_s / Wr->p + G1);
+                if(S < S_R)
+                    ans.set_param(rho_sR, u_s, p_s);
+                else
+                    ans = *Wr;
+            }
+            else
+            {
+                //Right fan
+                double S_HR = Wr->u + Wr->a;
+                if(S > S_HR)
+                    ans = *Wr;
+                else
+                {
+                    double S_TR = u_s + sound_speed(p_s, rho_sR);
+                    if(S < S_TR)
+                        ans.set_param(rho_sR, u_s, p_s);
+                    else
+                        W_fanR(Wr, S, ans);
+                }
+            }
+        }
+    }
 };
 
 const int NumOfPnt = 101;
@@ -259,8 +401,27 @@ int main(int argc, char **argv)
 				fout << Wr.rho << '\t' << Wr.u << '\t' << Wr.p << endl;
 		}
 
-        //Solve
-        //TODO
+        //Initialize
+        vector<PrimitiveVar> w(NumOfPnt), w_new(NumOfPnt);
+        for(int k = 0; k < NumOfPnt; ++k)
+        {
+            if(x[k] < xM)
+                w[k] = Wl;
+            else
+                w[k] = Wr;
+        }
+
+        //Iterate
+        for (int k = 1; k < NumOfStep; ++k)
+        {
+            fout << k << endl;
+
+            for (int i = 0; i < NumOfPnt; i++)
+            {
+                
+            }
+        }
+        
 	}
 	
 	return 0;
