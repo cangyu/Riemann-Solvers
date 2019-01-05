@@ -37,31 +37,31 @@ inline double kinetic_energy(double u)
 
 class PrimitiveVar
 {
-public:
+private:
     double rho, u, p;
     double a, e;
 
 public:
     PrimitiveVar(double density, double velocity, double pressure)
     {
-        set_param(density, velocity, pressure);
+        set(density, velocity, pressure);
     }
 
     PrimitiveVar(istream &in)
     {
         double density, velocity, pressure;
         in >> density >> velocity >> pressure;
-        set_param(density, velocity, pressure);
+        set(density, velocity, pressure);
     }
 
     PrimitiveVar() 
     {
-        set_param(1.0, 0.0, 101325.0);
+        set(1.0, 0.0, 101325.0);
     }
 
     ~PrimitiveVar() {}
 
-    void set_param(double density, double velocity, double pressure)
+    void set(double density, double velocity, double pressure)
     {
         rho = density;
         u = velocity;
@@ -132,7 +132,7 @@ inline double ddf(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
 }
 
 //Exact solution of then 1-D Euler equation
-//Namely the Riemann problem, where initial discontinuity exists
+//This is the Riemann problem, where initial discontinuity exists
 double p_star(const PrimitiveVar &Wl, const PrimitiveVar &Wr)
 {
     const double TOL = 1e-6;
@@ -218,23 +218,23 @@ inline double E(double density, double velocity, double pressure)
 
 class ConservativeVar
 {
-public:
+private:
     double u[3];
 
 public:
     ConservativeVar() 
     {
-        set_param(1.0, 0.0, 101325.0);
+        set(1.0, 0.0, 101325.0);
     }
 
     ConservativeVar(const PrimitiveVar &x)
     {
-        set_param(x.rho, x.u, x.p);
+        set(x.rho, x.u, x.p);
     }
 
     ~ConservativeVar() {}
 
-    void set_param(double density, double velocity, double pressure)
+    void set(double density, double velocity, double pressure)
     {
         u[0] = density;
         u[1] = density * velocity;
@@ -244,23 +244,37 @@ public:
 
 class FluxVar
 {
-public:
-    double flux[3];
+private:
+    double f[3];
 
 public:
     FluxVar() 
     {
-        flux[0] = flux[1] = flux[2] = 0.0;
-    }
-
-    FluxVar(const PrimitiveVar &W)
-    {
-        flux[0] = W.rho * W.u;
-        flux[1] = W.rho * pow(W.u, 2) + W.p;
-        flux[2] = W.u * (E(W) + W.p);
+        f[0] = f[1] = f[2] = 0.0;
     }
 
     ~FluxVar() {}
+
+    void set(const PrimitiveVar &W)
+    {
+        f[0] = W.rho * W.u;
+        f[1] = W.rho * pow(W.u, 2) + W.p;
+        f[2] = W.u * (E(W) + W.p);
+    }
+
+	void set(double density, double velocity, double pressure)
+	{
+		f[0] = density * velocity;
+		f[1] = density * pow(velocity, 2) + pressure;
+		f[2] = velocity * (E(density, velocity, pressure) + W.p);
+	}
+
+	double operator[](int n)
+	{
+		if(n < 0 || n >=3)
+			throw("Invalid index!");
+		return f[n];
+	}
 };
 
 void W_fanL(PrimitiveVar *W, double S, PrimitiveVar &ans)
@@ -282,20 +296,38 @@ void W_fanR(PrimitiveVar *W, double S, PrimitiveVar &ans)
 class InterCell
 {
 private:
-    PrimitiveVar *Wl, *Wr;
-    double p_s, u_s, rho_sL, rho_sR;
+	PrimitiveVar *Wl, *Wr;
+	double p_s, u_s, rho_sL, rho_sR;
+	FluxVar local_flux;
 
 public:
-    InterCell(PrimitiveVar *left, PrimitiveVar *right):Wl(left), Wr(right)
-    {
-        //Get the exact solution
-        p_s = p_star(*left, *right);
-        u_s = u_star(p_s, *left, *right);
-        rho_sL = rho_star(p_s, *left);
-        rho_sR = rho_star(p_s, *right);
-    }
+	InterCell()
+	{
+		Wl = NULL;
+		Wr = NULL;
+		p_s = 101325.0;
+		u_s = 0.0;
+		rho_sL = 1.0;
+		rho_sR = 1.0;
+	}
 
-    ~InterCell() {}
+	~InterCell() {}
+
+	void set_param(PrimitiveVar *left, PrimitiveVar *right)
+	{
+		Wl = left;
+		Wr = right;
+
+		//Get the exact solution
+		p_s = p_star(*left, *right);
+		u_s = u_star(p_s, *left, *right);
+		rho_sL = rho_star(p_s, *left);
+		rho_sR = rho_star(p_s, *right);
+
+		PrimitiveVar x;
+		RP(0.0, x);
+		local_flux.set_param(x);
+	}
 
     //Solution of the Riemann Problem
     //10 possible wave patterns
@@ -365,11 +397,18 @@ const double xL = 0, xR = 1.0;
 const double xM = (xL + xR) / 2;
 const double dx = (xR - xL) / (NumOfPnt - 1);
 
+void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W)
+{
+	f << time_step << endl;
+	for (int i = 0; i < NumOfPnt; i++)
+		f << W[i].rho << '\t' << W[i].u << '\t' << W[i].p << endl;
+}
+
 int main(int argc, char **argv)
 {
 	int n;
-    double dt;
-    int NumOfStep;
+	double dt;
+	int NumOfStep;
 
     //Coordinates
     vector<double> x(NumOfPnt, xL);
@@ -380,48 +419,57 @@ int main(int argc, char **argv)
 	cin >> n;
 	for(int k = 0; k < n; ++k)
 	{    
-        //Input
+		//Input
 		PrimitiveVar Wl(cin), Wr(cin);
-        cin >> dt >> NumOfStep;
-        
-        //Output coordinates and intial settings
+		cin >> dt >> NumOfStep;
+
+		//Output coordinates and intial settings
 		ofstream fout("godunov.txt");
 		if (!fout)
 			throw "Failed to open file!";
 
 		fout << NumOfStep << '\t' << NumOfPnt << endl;
-		for (int i = 0; i < NumOfPnt; i++)
-			fout << x[i] << endl;
-		fout << 0 << endl;
-		for (int i = 0; i < NumOfPnt; i++)
+		fout << x[0];
+		for (int i = 1; i < NumOfPnt; i++)
+			fout << '\t' << x[i];
+		fout << endl;
+
+
+		//Initialize
+		int PREV = 0, CUR = 1;
+		vector<vector<PrimitiveVar>> w(2, vector<PrimitiveVar>(NumOfPnt+2));
+		w[PREV][0] = Wl;
+		for(int k = 1; k <= NumOfPnt; ++k)
 		{
-			if (x[i] < xM)
-				fout << Wl.rho << '\t' << Wl.u << '\t' << Wl.p << endl;
+			if(x[k] < xM)
+				w[PREV][k] = Wl;
 			else
-				fout << Wr.rho << '\t' << Wr.u << '\t' << Wr.p << endl;
+				w[PREV][k] = Wr;
 		}
+		w[PREV][NumOfPnt+1] = Wr;
+		output(fout, 0, W[PREV]);
 
-        //Initialize
-        vector<PrimitiveVar> w(NumOfPnt), w_new(NumOfPnt);
-        for(int k = 0; k < NumOfPnt; ++k)
-        {
-            if(x[k] < xM)
-                w[k] = Wl;
-            else
-                w[k] = Wr;
-        }
+		vector<InterCell> f(NumOfPnt+1);
 
-        //Iterate
-        for (int k = 1; k < NumOfStep; ++k)
-        {
-            fout << k << endl;
+		//Iterate
+		for (int k = 1; k < NumOfStep; ++k)
+		{
+			for(int j = 0; j < NunOfPnt+1; ++j)
+				f[j].set_param(&w[k], &w[j+1]);
 
-            for (int i = 0; i < NumOfPnt; i++)
-            {
-                
-            }
-        }
-        
+			for(int j = 1; j <=NumOfPnt; ++j)
+			{
+				double factor = - dt/dx;
+				double fc[3];
+				for(int i = 0; i < 3; i++)
+					fc[i] = f[j].local_flux[i] - f[j-1].local_flux[i];
+				
+				w[CUR][j].density = w[PREV][j].density + factor * fc[0];
+				w[CUR][j].velocity = w[PREV][j].velocity + factor * fc[1];
+				w[CUR][j].pressure = w[PREV][j].pressure + factor * fc[2];
+			}
+			output(fout, k, w[CUR]);
+		}
 	}
 	
 	return 0;
