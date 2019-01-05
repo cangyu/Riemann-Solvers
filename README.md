@@ -1,13 +1,6 @@
 # RiemannSolver
 Riemann Solvers and Numerical Methods for Fluid Dynamics 
 
-## Exact Solver
-Solve the 1D Euler equation with ideal gas.  
-Especially, vacuum condition is considered.
-> * Compile: `g++ main.cc -o Exact.out`  
-> * Execute: `./Exact.out < inp.dat`  
-> * Plot: `python animate.py`
-
 ## Linear Advection
 Different schemes are employed for comparison
 > * CIR  
@@ -33,3 +26,18 @@ Usage:
 > * Compile: `g++ main.cc -o a.out`
 > * Execute: `./a.out`  
 > * Plot: `python animate_single.py` or `python animate_all.py`
+
+## Euler Equation
+1-D Euler equation with ideal gas.
+### Exact solution
+Calculate numerically the exact solution.  
+Especially, vacuum condition is considered.
+> * Compile: `g++ main.cc -o Exact.out`  
+> * Execute: `./Exact.out < inp.dat`  
+> * Plot: `python animate.py`
+### Godunov Scheme
+Calculate the approximate solution where the exact solution of Riemann problem is applied locally.  
+> * Compile: `g++ main.cc -o Godunov.out`  
+> * Execute: `./Godunov.out < inp.dat`  
+> * Plot: `python animate.py`
+
