@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
 			x_sample[NumOfPnt - (i + 1)] = xr - i * dxr;
 		
 		//Output coordinates and intial settings
-		ofstream fout = ofstream(header + ".txt");
+		ofstream fout(header + ".txt");
 		if (!fout)
 			throw "Failed to open file!";
 
