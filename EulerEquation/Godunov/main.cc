@@ -470,10 +470,8 @@ int main(int argc, char **argv)
 
         //Output coordinates and intial settings
         fout << NumOfStep << '\t' << NumOfPnt << endl;
-        fout << x[0];
-        for (int i = 1; i < NumOfPnt; i++)
-            fout << '\t' << x[i];
-        fout << endl;
+        for (int i = 0; i < NumOfPnt; i++)
+            fout << x[i] << endl;
 
         //Initialize
         int PREV = 0, CUR = 1;
