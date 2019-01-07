@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 const double G0 = 1.4;
 const double G1 = 0.5 * (G0 - 1) / G0;
 const double G2 = 0.5 * (G0 + 1) / G0;
@@ -22,7 +24,11 @@ const double G12 = 1.0 / G0;
 
 const double CFL = 0.8;
 
-using namespace std;
+const int NumOfPnt = 201;
+const double xL = 0, xR = 1.0;
+const double xM = (xL + xR) / 2;
+const double dx = (xR - xL) / (NumOfPnt - 1);
+
 
 inline double sound_speed(double p, double rho)
 {
@@ -249,12 +255,19 @@ class FluxVar
         f[2] = velocity * (E(density, velocity, pressure) + pressure);
     }
 
-    double operator[](int n)
+    double mass_flux() const
     {
-        if (n < 0 || n >= 3)
-            throw("Invalid index!");
+        return f[0];
+    }
 
-        return f[n];
+    double momentum_flux() const
+    {
+        return f[1];
+    }
+
+    double energy_flux() const
+    {
+        return f[2];
     }
 
     FluxVar operator-(const FluxVar &rhs)
@@ -431,11 +444,6 @@ class InterCell
     }
 };
 
-const int NumOfPnt = 101;
-const double xL = 0, xR = 1.0;
-const double xM = (xL + xR) / 2;
-const double dx = (xR - xL) / (NumOfPnt - 1);
-
 void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W)
 {
     f << time_step << endl;
@@ -450,15 +458,19 @@ int main(int argc, char **argv)
     for (int k = 1; k < NumOfPnt; ++k)
         x[k] = x[k - 1] + dx;
 
+    ifstream fin("inp.dat");
+    if (!fin)
+        throw "Failed to read input data!";
+
     //Loop all cases
     int NumOfCase;
-    cin >> NumOfCase;
+    fin >> NumOfCase;
     for (int c = 0; c < NumOfCase; ++c)
     {
         //Input
-        PrimitiveVar Wl(cin), Wr(cin);
+        PrimitiveVar Wl(fin), Wr(fin);
         int NumOfStep;
-        cin >> NumOfStep;
+        fin >> NumOfStep;
 
         //Create output data file
         stringstream ss;
@@ -475,11 +487,11 @@ int main(int argc, char **argv)
 
         //Initialize
         int PREV = 0, CUR = 1;
-        vector<vector<PrimitiveVar>> w(2, vector<PrimitiveVar>(NumOfPnt + 2));
+        vector<vector<PrimitiveVar> > w(2, vector<PrimitiveVar>(NumOfPnt + 2));
         w[PREV][0] = Wl;
         for (int j = 1; j <= NumOfPnt; ++j)
         {
-            if (x[j] < xM)
+            if (x[j-1] < xM)
                 w[PREV][j] = Wl;
             else
                 w[PREV][j] = Wr;
@@ -487,9 +499,8 @@ int main(int argc, char **argv)
         w[PREV][NumOfPnt + 1] = Wr;
         output(fout, 0, w[PREV]);
 
-        vector<InterCell> f(NumOfPnt + 1);
-
         //Iterate
+        vector<InterCell> f(NumOfPnt + 1);
         for (int i = 1; i < NumOfStep; i++)
         {
             //Calculate intercell flux
@@ -510,8 +521,8 @@ int main(int argc, char **argv)
             double r = -dt / dx;
             for (int j = 1; j <= NumOfPnt; ++j)
             {
-                FluxVar dflux = f[j].local_flux - f[j - 1].local_flux;
-                ConservativeVar dU(dflux[0] * r, dflux[1] * r, dflux[2] * r);
+                FluxVar cf = f[j].local_flux - f[j - 1].local_flux;
+                ConservativeVar dU(cf.mass_flux() * r, cf.momentum_flux() * r, cf.energy_flux() * r);
                 ConservativeVar U_prev(w[PREV][j]);
                 ConservativeVar U_cur = U_prev + dU;
                 w[CUR][j] = U_cur.toPrimitive();
