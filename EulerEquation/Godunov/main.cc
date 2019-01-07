@@ -1,8 +1,10 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <string>
 
 const double G0 = 1.4;
 const double G1 = 0.5 * (G0 - 1) / G0;
@@ -279,7 +281,7 @@ class ConservativeVar
         set(x.rho, x.u, x.p);
     }
 
-    ~ConservativeVar()= default;
+    ~ConservativeVar() = default;
 
     void set(double density, double velocity, double pressure)
     {
@@ -458,11 +460,15 @@ int main(int argc, char **argv)
         int NumOfStep;
         cin >> NumOfStep;
 
-        //Output coordinates and intial settings
-        ofstream fout("godunov.txt");
+        //Create output data file
+        stringstream ss;
+        ss << c + 1;
+        string header = "Case" + ss.str() + ".txt";
+        ofstream fout(header);
         if (!fout)
             throw "Failed to open file!";
 
+        //Output coordinates and intial settings
         fout << NumOfStep << '\t' << NumOfPnt << endl;
         fout << x[0];
         for (int i = 1; i < NumOfPnt; i++)
@@ -471,7 +477,7 @@ int main(int argc, char **argv)
 
         //Initialize
         int PREV = 0, CUR = 1;
-        vector<vector<PrimitiveVar> > w(2, vector<PrimitiveVar>(NumOfPnt + 2));
+        vector<vector<PrimitiveVar>> w(2, vector<PrimitiveVar>(NumOfPnt + 2));
         w[PREV][0] = Wl;
         for (int j = 1; j <= NumOfPnt; ++j)
         {
@@ -494,7 +500,7 @@ int main(int argc, char **argv)
 
             //Choose proper time-step
             double S = 0.0;
-            for(int j = 1; j < NumOfPnt; ++j)
+            for (int j = 1; j < NumOfPnt; ++j)
             {
                 double S_local = fabs(w[PREV][j].u) + w[PREV][j].a;
                 if (S_local > S)
@@ -510,12 +516,12 @@ int main(int argc, char **argv)
                 ConservativeVar dU(dflux[0] * r, dflux[1] * r, dflux[2] * r);
                 ConservativeVar U_prev(w[PREV][j]);
                 ConservativeVar U_cur = U_prev + dU;
-                w[CUR][j] =  U_cur.toPrimitive();
+                w[CUR][j] = U_cur.toPrimitive();
             }
 
             //Transmissive B.C.
             w[CUR][0] = w[CUR][1];
-            w[CUR][NumOfPnt+1] = w[CUR][NumOfPnt];
+            w[CUR][NumOfPnt + 1] = w[CUR][NumOfPnt];
 
             //Log
             output(fout, i, w[CUR]);
