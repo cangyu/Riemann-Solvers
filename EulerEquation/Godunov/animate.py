@@ -24,7 +24,7 @@ if __name__ == '__main__':
         for k in range(NumOfPnt):
             x[k] = float(fin.readline().strip())
 
-        animation_data = np.zeros((NumOfStep, NumOfPnt, 3))
+        animation_data = np.zeros((NumOfStep, NumOfPnt, 4))
         for n in range(NumOfStep):
             fin.readline()
             for k in range(NumOfPnt):
@@ -33,21 +33,26 @@ if __name__ == '__main__':
         fin.close()
 
         fig = plt.figure()
-        ax1 = fig.add_subplot(311)
+        ax1 = fig.add_subplot(411)
         ax1.set_ylabel(r'$\rho$')
 
-        ax2 = fig.add_subplot(312)
+        ax2 = fig.add_subplot(412)
         ax2.set_ylabel(r'$u$')
 
-        ax3 = fig.add_subplot(313)
+        ax3 = fig.add_subplot(413)
         ax3.set_xlabel('X')
         ax3.set_ylabel(r'$P$')
+
+        ax4 = fig.add_subplot(414)
+        ax4.set_xlabel('X')
+        ax4.set_ylabel(r'$e$')
 
         line1, = ax1.plot(x, animation_data[0, :, 0])
         line2, = ax2.plot(x, animation_data[0, :, 1])
         line3, = ax3.plot(x, animation_data[0, :, 2])
+        line4, = ax4.plot(x, animation_data[0, :, 3])
 
-        margin = 0.1
+        margin = 0.05
 
 
         def update1(data):
@@ -85,10 +90,22 @@ if __name__ == '__main__':
             line3.set_ydata(cur_data)
             return line3
 
+        def update4(data):
+            cur_data = data[:, 3]
+            bot = np.min(cur_data)
+            top = np.max(cur_data)
+            height = top - bot
+            mh = margin * height
+            if top > bot:
+                ax4.set_ylim(bot - mh, top + mh)
+            line4.set_ydata(cur_data)
+            return line4
+
 
         a = animation.FuncAnimation(fig, update1, animation_data)
         b = animation.FuncAnimation(fig, update2, animation_data)
         c = animation.FuncAnimation(fig, update3, animation_data)
+        d = animation.FuncAnimation(fig, update4, animation_data)
 
         plt.tight_layout()
         plt.show()

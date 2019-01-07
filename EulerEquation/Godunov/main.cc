@@ -448,7 +448,7 @@ void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W)
 {
     f << time_step << endl;
     for (int i = 1; i <= NumOfPnt; i++)
-        f << W[i].rho << '\t' << W[i].u << '\t' << W[i].p << endl;
+        f << W[i].rho << '\t' << W[i].u << '\t' << W[i].p << '\t' << W[i].e << endl;
 }
 
 int main(int argc, char **argv)
