@@ -37,7 +37,7 @@ Especially, vacuum condition is considered.
 > * Plot: `python animate.py`
 ### Godunov Scheme
 Calculate the approximate solution where the exact solution of Riemann problem is applied locally.  
-> * Compile: `g++ main.cc -o Godunov.out`  
+> * Compile: `g++ main.cc -std=c++11 -o Godunov.out`  
 > * Execute: `./Godunov.out < inp.dat`  
 > * Plot: `python animate.py`
 

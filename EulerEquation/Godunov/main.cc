@@ -56,7 +56,7 @@ class PrimitiveVar
         set(density, velocity, pressure);
     }
 
-    ~PrimitiveVar() {}
+    ~PrimitiveVar() = default;
 
     void set(double density, double velocity, double pressure)
     {
@@ -231,7 +231,7 @@ class FluxVar
         f[2] = c;
     }
 
-    ~FluxVar() {}
+    ~FluxVar() = default;
 
     void set(const PrimitiveVar &W)
     {
@@ -279,7 +279,7 @@ class ConservativeVar
         set(x.rho, x.u, x.p);
     }
 
-    ~ConservativeVar() {}
+    ~ConservativeVar()= default;
 
     void set(double density, double velocity, double pressure)
     {
@@ -306,6 +306,11 @@ class ConservativeVar
     PrimitiveVar toPrimitive()
     {
         return PrimitiveVar(density(), velocity(), pressure());
+    }
+
+    ConservativeVar operator+(const ConservativeVar &rhs)
+    {
+        return ConservativeVar(this->u[0] + rhs.u[0], this->u[1] + rhs.u[1], this->u[2] + rhs.u[2]);
     }
 };
 
@@ -335,15 +340,15 @@ class InterCell
   public:
     InterCell()
     {
-        Wl = NULL;
-        Wr = NULL;
+        Wl = nullptr;
+        Wr = nullptr;
         p_s = 101325.0;
         u_s = 0.0;
         rho_sL = 1.0;
         rho_sR = 1.0;
     }
 
-    ~InterCell() {}
+    ~InterCell() = default;
 
     void set(PrimitiveVar *left, PrimitiveVar *right)
     {
@@ -444,9 +449,9 @@ int main(int argc, char **argv)
         x[k] = x[k - 1] + dx;
 
     //Loop all cases
-    int n;
-    cin >> n;
-    for (int k = 0; k < n; ++k)
+    int NumOfCase;
+    cin >> NumOfCase;
+    for (int c = 0; c < NumOfCase; ++c)
     {
         //Input
         PrimitiveVar Wl(cin), Wr(cin);
@@ -468,12 +473,12 @@ int main(int argc, char **argv)
         int PREV = 0, CUR = 1;
         vector<vector<PrimitiveVar> > w(2, vector<PrimitiveVar>(NumOfPnt + 2));
         w[PREV][0] = Wl;
-        for (int k = 1; k <= NumOfPnt; ++k)
+        for (int j = 1; j <= NumOfPnt; ++j)
         {
-            if (x[k] < xM)
-                w[PREV][k] = Wl;
+            if (x[j] < xM)
+                w[PREV][j] = Wl;
             else
-                w[PREV][k] = Wr;
+                w[PREV][j] = Wr;
         }
         w[PREV][NumOfPnt + 1] = Wr;
         output(fout, 0, w[PREV]);
@@ -481,11 +486,11 @@ int main(int argc, char **argv)
         vector<InterCell> f(NumOfPnt + 1);
 
         //Iterate
-        for (int k = 1; k < NumOfStep; ++k)
+        for (int i = 1; i < NumOfStep; i++)
         {
             //Calculate intercell flux
-            for (int j = 0; j < NumOfPnt + 1; ++j)
-                f[j].set(&w[PREV][k], &w[PREV][j + 1]);
+            for (int j = 0; j <= NumOfPnt; ++j)
+                f[j].set(&w[PREV][j], &w[PREV][j + 1]);
 
             //Choose proper time-step
             double S = 0.0;
@@ -502,8 +507,10 @@ int main(int argc, char **argv)
             for (int j = 1; j <= NumOfPnt; ++j)
             {
                 FluxVar dflux = f[j].local_flux - f[j - 1].local_flux;
-                ConservativeVar U(dflux[0] * r, dflux[1] * r, dflux[2] * r);
-                w[CUR][j] = w[PREV][j] + U.toPrimitive();
+                ConservativeVar dU(dflux[0] * r, dflux[1] * r, dflux[2] * r);
+                ConservativeVar U_prev(w[PREV][j]);
+                ConservativeVar U_cur = U_prev + dU;
+                w[CUR][j] =  U_cur.toPrimitive();
             }
 
             //Transmissive B.C.
@@ -511,7 +518,7 @@ int main(int argc, char **argv)
             w[CUR][NumOfPnt+1] = w[CUR][NumOfPnt];
 
             //Log
-            output(fout, k, w[CUR]);
+            output(fout, i, w[CUR]);
             swap(PREV, CUR);
         }
     }
