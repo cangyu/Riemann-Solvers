@@ -1,5 +1,5 @@
 # Riemann Solvers
-Code snippet follows from __Riemann Solvers and Numerical Methods for Fluid Dynamics__ by Eleuterio F. Toro
+Code snippets follow from ___Riemann Solvers and Numerical Methods for Fluid Dynamics___ by Eleuterio F. Toro, where essentials of CFD are discussed in detail.
 
 ## Linear Advection
 Different schemes are employed for comparison
