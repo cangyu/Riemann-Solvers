@@ -44,11 +44,17 @@ Usage:
 > * Execute: `./Exact.out < inp.dat`  
 > * Plot: `python3 animate.py`
 
-### Godunov Scheme(ch6)
-Calculate the approximate solution where the exact solution of Riemann problem is applied locally. 
+### Godunov's Method(ch6)
+The essential ingredient of Godunov's method is to solve _Riemann Problem_ locally, and the keypoint in numerical parctice is to identify all of the 10 possible wave patterns so that the inter-cell flux can be calculated properly.
 
 Usage:
 > * Compile: `g++ main.cc -std=c++11 -o Godunov.out`  
 > * Execute: `./Godunov.out < inp.dat`  
 > * Plot: `python3 animate.py`
+
+### Lax-Friedrichs(ch5 & ch6)
+
+
+### RCM(ch7)
+
 
