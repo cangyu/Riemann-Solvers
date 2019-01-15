@@ -2,7 +2,8 @@
 Code snippets follow from ___Riemann Solvers and Numerical Methods for Fluid Dynamics___ by Eleuterio F. Toro, where essentials of CFD are discussed in detail.
 
 ## Linear Advection(ch2 & ch5)
-Both _smooth_ and _discontinous_ initial velocity profile are examined. The exact solution is quite trival, just trace back along the characteristic line.  
+Both _smooth_ and _discontinous_ initial velocity profile are examined.  
+The exact solution is quite trival, just trace back along the characteristic line.  
 Different schemes are employed for comparison:
 > * CIR  
 > * Lax-Friedrichs  
@@ -16,9 +17,8 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ## Invisid Burgers Equation(ch2 & ch5)
-Target equation:
-$$u_t + u u_x = 0$$  
-Only the __discontinous__ initial velocity profile is examined, and analytically, the exact solution is either a _shock_ wave or a _rarefaction_ wave.
+Only the __discontinous__ initial velocity profile is examined.  
+Analytically, the exact solution is either a _shock_ wave or a _rarefaction_ wave.
 Different schemes are employed for comparison:
 > * CIR  
 > * Lax-Friedrichs  
@@ -45,7 +45,9 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### Godunov Scheme(ch6)
-Calculate the approximate solution where the exact solution of Riemann problem is applied locally.  
+Calculate the approximate solution where the exact solution of Riemann problem is applied locally. 
+
+Usage:
 > * Compile: `g++ main.cc -std=c++11 -o Godunov.out`  
 > * Execute: `./Godunov.out < inp.dat`  
 > * Plot: `python3 animate.py`
