@@ -208,7 +208,7 @@ inline double u_star(double p, const PrimitiveVar &Wl, const PrimitiveVar &Wr)
 
 inline double rho_star(double p, const PrimitiveVar &W)
 {
-    double t = p / W.p;
+    const double t = p / W.p;
 
     if (t > 1.0)
         return W.rho * ((t + G6) / (G6 * t + 1));
@@ -329,7 +329,7 @@ class ConservativeVar
     }
 };
 
-void W_fanL(PrimitiveVar *W, double S, PrimitiveVar &ans)
+void W_fanL(const PrimitiveVar *W, double S, PrimitiveVar &ans)
 {
     double density = W->rho * pow(G5 + G6 / W->a * (W->u - S), G4);
     double velocity = G5 * (W->a + G7 * W->u + S);
@@ -337,7 +337,7 @@ void W_fanL(PrimitiveVar *W, double S, PrimitiveVar &ans)
     ans.set(density, velocity, pressure);
 }
 
-void W_fanR(PrimitiveVar *W, double S, PrimitiveVar &ans)
+void W_fanR(const PrimitiveVar *W, double S, PrimitiveVar &ans)
 {
     double density = W->rho * pow(G5 - G6 / W->a * (W->u - S), G4);
     double velocity = G5 * (-W->a + G7 * W->u + S);
@@ -444,11 +444,64 @@ class InterCell
     }
 };
 
-void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W)
+void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W, const vector<PrimitiveVar> &W_exact)
 {
     f << time_step << endl;
     for (int i = 1; i <= NumOfPnt; i++)
-        f << W[i].rho << '\t' << W[i].u << '\t' << W[i].p << '\t' << W[i].e << endl;
+    {
+        f << W[i].rho << '\t' << W[i].u << '\t' << W[i].p << '\t' << W[i].e;
+        f << '\t' << W_exact[i].rho << '\t' << W_exact[i].u << '\t' << W_exact[i].p << '\t' << W_exact[i].e << endl;
+    }
+}
+
+void ExactSol(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double p_s, double u_s, double rho_sL, double rho_sR, double S, PrimitiveVar &ans)
+{
+    if(S < u_s)
+    {
+        const double S_L = Wl.u - Wl.a * sqrt(G2 * p_s / Wl.p + G1);
+	    const double S_HL = Wl.u - Wl.a;
+	    const double S_TL = u_s - sound_speed(p_s, rho_sL);
+
+        if(p_s > Wl.p)
+        {
+            if(S < S_L)
+                ans = Wl;
+            else
+                ans.set(rho_sL, u_s, p_s);
+        }
+        else
+        {
+            if (S < S_HL)
+                ans = Wl;
+            else if(S > S_TL)
+                ans.set(rho_sL, u_s, p_s);
+            else
+                W_fanL(&Wl, S, ans);
+        }
+    }
+    else
+    {
+        const double S_R = Wr.u + Wr.a * sqrt(G2 * p_s / Wr.p + G1);
+        const double S_HR = Wr.u + Wr.a;
+        const double S_TR = u_s + sound_speed(p_s, rho_sR);
+
+        if(p_s > Wr.p)
+        {
+            if (S > S_R)
+                ans = Wr;
+            else
+                ans.set(rho_sR, u_s, p_s);
+        }
+        else
+        {
+            if(S > S_HR)
+                ans = Wr;
+            else if(S < S_TR)
+                ans.set(rho_sR, u_s, p_s);
+            else
+                W_fanR(&Wr, S, ans);
+        }
+    }
 }
 
 int main(int argc, char **argv)
@@ -471,6 +524,12 @@ int main(int argc, char **argv)
         PrimitiveVar Wl(fin), Wr(fin);
         int NumOfStep;
         fin >> NumOfStep;
+
+        //For exact solution
+        const double p_middle = p_star(Wl, Wr);
+        const double u_middle= u_star(p_middle, Wl, Wr);
+        const double rho_middle_left = rho_star(p_middle, Wl);
+        const double rho_middle_right = rho_star(p_middle, Wr);
 
         //Create output data file
         stringstream ss;
@@ -497,9 +556,10 @@ int main(int argc, char **argv)
                 w[PREV][j] = Wr;
         }
         w[PREV][NumOfPnt + 1] = Wr;
-        output(fout, 0, w[PREV]);
+        output(fout, 0, w[PREV], w[PREV]);
 
         //Iterate
+        double t = 0.0;
         vector<InterCell> f(NumOfPnt + 1);
         for (int i = 1; i < NumOfStep; i++)
         {
@@ -515,10 +575,11 @@ int main(int argc, char **argv)
                 if (S_local > S)
                     S = S_local;
             }
-            double dt = CFL * dx / S;
+            const double dt = CFL * dx / S;
+            t += dt;
 
             //Apply the Godunov method
-            double r = -dt / dx;
+            const double r = -dt / dx;
             for (int j = 1; j <= NumOfPnt; ++j)
             {
                 FluxVar cf = f[j].local_flux - f[j - 1].local_flux;
@@ -532,11 +593,21 @@ int main(int argc, char **argv)
             w[CUR][0] = w[CUR][1];
             w[CUR][NumOfPnt + 1] = w[CUR][NumOfPnt];
 
+            //Calculate exact solution for comparision
+            vector<PrimitiveVar> w_exact(NumOfPnt+2);
+            for(int j = 1; j <= NumOfPnt; ++j)
+            {
+                const double S = (x[j-1] - xM) / t;
+                ExactSol(Wl, Wr, p_middle, u_middle, rho_middle_left, rho_middle_right, S, w_exact[j]);
+            }
+
             //Log
-            output(fout, i, w[CUR]);
+            output(fout, i, w[CUR], w_exact);
             swap(PREV, CUR);
         }
+        fout.close();
     }
+    fin.close();
 
     return 0;
 }

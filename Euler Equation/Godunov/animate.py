@@ -24,7 +24,7 @@ if __name__ == '__main__':
         for k in range(NumOfPnt):
             x[k] = float(fin.readline().strip())
 
-        animation_data = np.zeros((NumOfStep, NumOfPnt, 4))
+        animation_data = np.zeros((NumOfStep, NumOfPnt, 8))
         for n in range(NumOfStep):
             fin.readline()
             for k in range(NumOfPnt):
@@ -47,59 +47,59 @@ if __name__ == '__main__':
         ax4.set_xlabel('X')
         ax4.set_ylabel(r'$e$')
 
-        line1, = ax1.plot(x, animation_data[0, :, 0])
-        line2, = ax2.plot(x, animation_data[0, :, 1])
-        line3, = ax3.plot(x, animation_data[0, :, 2])
-        line4, = ax4.plot(x, animation_data[0, :, 3])
+        line11, = ax1.plot(x, animation_data[0, :, 0], 'ro', fillstyle='none')
+        line12, = ax1.plot(x, animation_data[0, :, 4])
+        line21, = ax2.plot(x, animation_data[0, :, 1], 'ro', fillstyle='none')
+        line22, = ax2.plot(x, animation_data[0, :, 5])
+        line31, = ax3.plot(x, animation_data[0, :, 2], 'ro', fillstyle='none')
+        line32, = ax3.plot(x, animation_data[0, :, 6])
+        line41, = ax4.plot(x, animation_data[0, :, 3], 'ro', fillstyle='none')
+        line42, = ax4.plot(x, animation_data[0, :, 7])
 
         margin = 0.05
 
 
         def update1(data):
-            cur_data = data[:, 0]
-            bot = np.min(cur_data)
-            top = np.max(cur_data)
+            bot = min(np.min(data[:, 0]), np.min(data[:, 4]))
+            top = max(np.max(data[:, 0]), np.max(data[:, 4]))
             height = top - bot
             mh = margin * height
             if top > bot:
                 ax1.set_ylim(bot - mh, top + mh)
-            line1.set_ydata(cur_data)
-            return line1
+            line11.set_ydata(data[:, 0])
+            line12.set_ydata(data[:, 4])
 
 
         def update2(data):
-            cur_data = data[:, 1]
-            bot = np.min(cur_data)
-            top = np.max(cur_data)
+            bot = min(np.min(data[:, 1]), np.min(data[:, 5]))
+            top = max(np.max(data[:, 1]), np.max(data[:, 5]))
             height = top - bot
             mh = margin * height
             if top > bot:
                 ax2.set_ylim(bot - mh, top + mh)
-            line2.set_ydata(cur_data)
-            return line2
+            line21.set_ydata(data[:, 1])
+            line22.set_ydata(data[:, 5])
 
 
         def update3(data):
-            cur_data = data[:, 2]
-            bot = np.min(cur_data)
-            top = np.max(cur_data)
+            bot = min(np.min(data[:, 2]), np.min(data[:, 6]))
+            top = max(np.max(data[:, 2]), np.max(data[:, 6]))
             height = top - bot
             mh = margin * height
             if top > bot:
                 ax3.set_ylim(bot - mh, top + mh)
-            line3.set_ydata(cur_data)
-            return line3
+            line31.set_ydata(data[:, 2])
+            line32.set_ydata(data[:, 6])
 
         def update4(data):
-            cur_data = data[:, 3]
-            bot = np.min(cur_data)
-            top = np.max(cur_data)
+            bot = min(np.min(data[:, 3]), np.min(data[:, 7]))
+            top = max(np.max(data[:, 3]), np.max(data[:, 7]))
             height = top - bot
             mh = margin * height
             if top > bot:
                 ax4.set_ylim(bot - mh, top + mh)
-            line4.set_ydata(cur_data)
-            return line4
+            line41.set_ydata(data[:, 3])
+            line42.set_ydata(data[:, 7])
 
 
         a = animation.FuncAnimation(fig, update1, animation_data)
