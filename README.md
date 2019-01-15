@@ -1,5 +1,5 @@
-# RiemannSolver
-Riemann Solvers and Numerical Methods for Fluid Dynamics 
+# Riemann Solvers
+Code snippet follows from __Riemann Solvers and Numerical Methods for Fluid Dynamics__ by Eleuterio F. Toro
 
 ## Linear Advection
 Different schemes are employed for comparison
