@@ -398,68 +398,6 @@ class InterCell
         local_flux.momentum_flux() = 0.5 * sf.momentum_flux() + 0.5 * S * dU.elem(1);
         local_flux.energy_flux() = 0.5 * sf.energy_flux() + 0.5 * S * dU.elem(2);
     }
-
-    //Solution of the Riemann Problem
-    //10 possible wave patterns
-    void RP(double S, PrimitiveVar &ans)
-    {
-        if (S < u_s)
-        {
-            //At the left of the contact discontinuity
-            if (p_s > Wl->p)
-            {
-                //Left shock
-                double S_L = Wl->u - Wl->a * sqrt(G2 * p_s / Wl->p + G1);
-                if (S < S_L)
-                    ans = *Wl;
-                else
-                    ans.set(rho_sL, u_s, p_s);
-            }
-            else
-            {
-                //Left fan
-                double S_HL = Wl->u - Wl->a;
-                if (S < S_HL)
-                    ans = *Wl;
-                else
-                {
-                    double S_TL = u_s - sound_speed(p_s, rho_sL);
-                    if (S > S_TL)
-                        ans.set(rho_sL, u_s, p_s);
-                    else
-                        W_fanL(Wl, S, ans);
-                }
-            }
-        }
-        else
-        {
-            //At the right of the contact discontinuity
-            if (p_s > Wr->p)
-            {
-                //Right shock
-                double S_R = Wr->u + Wr->a * sqrt(G2 * p_s / Wr->p + G1);
-                if (S < S_R)
-                    ans.set(rho_sR, u_s, p_s);
-                else
-                    ans = *Wr;
-            }
-            else
-            {
-                //Right fan
-                double S_HR = Wr->u + Wr->a;
-                if (S > S_HR)
-                    ans = *Wr;
-                else
-                {
-                    double S_TR = u_s + sound_speed(p_s, rho_sR);
-                    if (S < S_TR)
-                        ans.set(rho_sR, u_s, p_s);
-                    else
-                        W_fanR(Wr, S, ans);
-                }
-            }
-        }
-    }
 };
 
 void output(ofstream &f, int time_step, const vector<PrimitiveVar> &W, const vector<PrimitiveVar> &W_exact)
