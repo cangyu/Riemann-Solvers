@@ -467,19 +467,15 @@ int main(int argc, char **argv)
     for (int k = 1; k < NumOfPnt; ++k)
         x[k] = x[k - 1] + dx;
 
-    ifstream fin("inp.dat");
-    if (!fin)
-        throw "Failed to read input data!";
-
     //Loop all cases
     int NumOfCase;
-    fin >> NumOfCase;
+    cin >> NumOfCase;
     for (int c = 0; c < NumOfCase; ++c)
     {
         //Input
-        PrimitiveVar Wl(fin), Wr(fin);
+        PrimitiveVar Wl(cin), Wr(cin);
         int NumOfStep;
-        fin >> NumOfStep;
+        cin >> NumOfStep;
 
         //For exact solution
         const double p_middle = p_star(Wl, Wr);
@@ -564,7 +560,6 @@ int main(int argc, char **argv)
         }
         fout.close();
     }
-    fin.close();
 
     return 0;
 }
