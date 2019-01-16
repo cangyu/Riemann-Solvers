@@ -53,7 +53,24 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### Lax-Friedrichs(ch5 & ch6)
+Follow the guide to rewrite the differential scheme into conservative form.  
+It's interesting to notice that Lax-Friedrichs scheme is identical to the Riemann Solution averaged at the __half__ of each time step.
+The key part in parctice is the Lax-Friedrichs inter-cell flux, see (5.77).
 
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o Lax.out`  
+> * Execute: `./Lax.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+### Richtmyer(ch5 & ch6)
+Again, rewrite the differential scheme into its conservative form.  
+Lax-Wendroff is of 2nd-order accuracy in space and time.  
+The Richtmyer version(2-step Lax-Wendroff), introduces an intermediate step where a tempory conservative variable is computed, and the inter-cell flux is calculated later on based on this tempory conservative variable.
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o Richtmyer.out`  
+> * Execute: `./Richtmyer.out < inp.dat`  
+> * Plot: `python3 animate.py`
 
 ### RCM(ch7)
 
