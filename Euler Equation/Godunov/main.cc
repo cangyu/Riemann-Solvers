@@ -569,7 +569,7 @@ int main(int argc, char **argv)
 
             //Choose proper time-step
             double S = 0.0;
-            for (int j = 1; j < NumOfPnt; ++j)
+            for (int j = 1; j <= NumOfPnt; ++j)
             {
                 double S_local = fabs(w[PREV][j].u) + w[PREV][j].a;
                 if (S_local > S)
