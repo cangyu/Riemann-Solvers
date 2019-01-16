@@ -8,7 +8,7 @@ if __name__ == '__main__':
         ok = False
         f = ''
         while not ok:
-            f = input("Enter filename:")
+            f = input("Enter filename(# to quit):")
             if os.path.exists(f):
                 ok = True
             else:
