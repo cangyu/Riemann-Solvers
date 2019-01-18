@@ -24,7 +24,7 @@ const double G12 = 1.0 / G0;
 const double G13 = 2.0 * G12;
 const double G14 = 0.5 * G4 * G5;
 
-const double CFL = 0.636;
+double CFL = 0.636;
 
 const int NumOfPnt = 201;
 const double xL = 0, xR = 1.0;
@@ -526,6 +526,11 @@ int main(int argc, char **argv)
                 if (S_local > S)
                     S = S_local;
             }
+            if(i < 5)
+                CFL = 0.2;
+            else
+                CFL = 0.6;
+
             const double dt = CFL * dx / S;
             t += dt;
 
