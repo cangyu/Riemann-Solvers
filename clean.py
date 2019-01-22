@@ -5,7 +5,7 @@ def action():
     for f in os.listdir(r):
         if os.path.isfile(f):
             _, ext = os.path.splitext(f)
-            if ext in ['.txt', '.out', '.exe', '.png']:
+            if ext in ['.txt', '.out', '.exe', '.png'] or f.endswith('.DS_Store'):
                 os.remove(f)
 
 
