@@ -8,7 +8,7 @@ if __name__ == '__main__':
         ok = False
         f = ''
         while not ok:
-            f = input("Enter filename:")
+            f = input("Enter filename(\'#\' to exit):")
             if os.path.exists(f):
                 ok = True
             else:
@@ -50,7 +50,8 @@ if __name__ == '__main__':
         margin = 0.1
 
 
-        def update1(data):
+        def update(data):
+            # rho plot
             cur_data = data[:, 0]
             bot = np.min(cur_data)
             top = np.max(cur_data)
@@ -59,10 +60,8 @@ if __name__ == '__main__':
             if top > bot:
                 ax1.set_ylim(bot - mh, top + mh)
             line1.set_ydata(cur_data)
-            return line1
 
-
-        def update2(data):
+            # u plot            
             cur_data = data[:, 1]
             bot = np.min(cur_data)
             top = np.max(cur_data)
@@ -71,10 +70,8 @@ if __name__ == '__main__':
             if top > bot:
                 ax2.set_ylim(bot - mh, top + mh)
             line2.set_ydata(cur_data)
-            return line2
 
-
-        def update3(data):
+            # P plot
             cur_data = data[:, 2]
             bot = np.min(cur_data)
             top = np.max(cur_data)
@@ -83,12 +80,9 @@ if __name__ == '__main__':
             if top > bot:
                 ax3.set_ylim(bot - mh, top + mh)
             line3.set_ydata(cur_data)
-            return line3
 
 
-        a = animation.FuncAnimation(fig, update1, animation_data)
-        b = animation.FuncAnimation(fig, update2, animation_data)
-        c = animation.FuncAnimation(fig, update3, animation_data)
+        ret = animation.FuncAnimation(fig, update, animation_data)
 
         plt.tight_layout()
         plt.show()
