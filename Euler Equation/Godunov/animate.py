@@ -8,7 +8,7 @@ if __name__ == '__main__':
         ok = False
         f = ''
         while not ok:
-            f = input("Enter filename:")
+            f = input("Enter filename(\'#\' to exit):")
             if os.path.exists(f):
                 ok = True
             else:
@@ -59,7 +59,8 @@ if __name__ == '__main__':
         margin = 0.05
 
 
-        def update1(data):
+        def update(data):
+            # rho plot
             bot = min(np.min(data[:, 0]), np.min(data[:, 4]))
             top = max(np.max(data[:, 0]), np.max(data[:, 4]))
             height = top - bot
@@ -69,8 +70,7 @@ if __name__ == '__main__':
             line11.set_ydata(data[:, 0])
             line12.set_ydata(data[:, 4])
 
-
-        def update2(data):
+            # u plot
             bot = min(np.min(data[:, 1]), np.min(data[:, 5]))
             top = max(np.max(data[:, 1]), np.max(data[:, 5]))
             height = top - bot
@@ -80,8 +80,7 @@ if __name__ == '__main__':
             line21.set_ydata(data[:, 1])
             line22.set_ydata(data[:, 5])
 
-
-        def update3(data):
+            # P plot
             bot = min(np.min(data[:, 2]), np.min(data[:, 6]))
             top = max(np.max(data[:, 2]), np.max(data[:, 6]))
             height = top - bot
@@ -91,7 +90,7 @@ if __name__ == '__main__':
             line31.set_ydata(data[:, 2])
             line32.set_ydata(data[:, 6])
 
-        def update4(data):
+            # e plot
             bot = min(np.min(data[:, 3]), np.min(data[:, 7]))
             top = max(np.max(data[:, 3]), np.max(data[:, 7]))
             height = top - bot
@@ -102,10 +101,7 @@ if __name__ == '__main__':
             line42.set_ydata(data[:, 7])
 
 
-        a = animation.FuncAnimation(fig, update1, animation_data)
-        b = animation.FuncAnimation(fig, update2, animation_data)
-        c = animation.FuncAnimation(fig, update3, animation_data)
-        d = animation.FuncAnimation(fig, update4, animation_data)
+        ret = animation.FuncAnimation(fig, update, animation_data)
 
         plt.tight_layout()
         plt.show()
