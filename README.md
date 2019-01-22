@@ -73,5 +73,69 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### RCM(ch7)
+TODO
 
+### FVS(ch8)
+Here, the inter-cell flux is not calculatd directly from the exact solution of Riemann Problem. Instead, the flux at each point is splitted into 2 parts: __upstream traveling__ and __downstream traveling__, then, for each inter-cell, the flux is seen as the sum of the upstream traveling part from the __left__ point and the downstream traveling part from the __right__ point.  
+3 typical splitting techniques are introduced.  
+
+#### Steger-Warming
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o SW.out`  
+> * Execute: `./SW.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### van Leer
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o vL.out`  
+> * Execute: `./vL.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### AUSM
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o AUSM.out`  
+> * Execute: `./AUSM.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+### Approximate-state(ch9)
+Godunov's method in conjunction with exact Riemann solution spends lots of computational effort on solving pressure in star region iteratively. One kind of approximate Riemann solution seeks to approximate the __state__ of the wave patterns so that unkonwn values at star region can be solved immediately.  
+5 typical approximate-state Riemann Solvers are implemented.  
+
+#### PVRS
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o PVRS.out`  
+> * Execute: `./PVRS.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### TRRS
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o TRRS.out`  
+> * Execute: `./TRRS.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### TSRS
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o TSRS.out`  
+> * Execute: `./TSRS.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### AIRS
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o AIRS.out`  
+> * Execute: `./AIRS.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+#### ANRS
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o ANRS.out`  
+> * Execute: `./ANRS.out < inp.dat`  
+> * Plot: `python3 animate.py`
 
