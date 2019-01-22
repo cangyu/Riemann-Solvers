@@ -373,8 +373,8 @@ class InterCell
         //Get the two-rarefaction approximate solution
         p_s = pow((Wl->a + Wr->a - G7 * (Wr->u - Wl->u))/(Wl->a / pow(Wl->p, G1) + Wr->a / pow(Wr->p, G1)) , 1.0/G1);
         u_s = u_star(p_s, *Wl, *Wr);
-        rho_sL = rho_star(p_s, *Wl);
-        rho_sR = rho_star(p_s, *Wr);
+        rho_sL = Wl->rho * pow(p_s / Wl->p, G12);
+        rho_sR = Wr->rho * pow(p_s / Wr->p, G12);
 
         //Sample at x=0
         PrimitiveVar x;
