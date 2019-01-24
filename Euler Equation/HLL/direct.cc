@@ -35,6 +35,14 @@ inline double sound_speed(double p, double rho)
     return sqrt(G0 * p / rho);
 }
 
+inline double mach_number(double u, double a)
+{
+    if(fabs(a) < 1e-6)
+        return 0;
+    else
+        return u/a;
+}
+
 inline double internal_energy(double p, double rho)
 {
     return p / (G8 * rho);
@@ -79,7 +87,7 @@ class PrimitiveVar
         p = pressure;
         a = sound_speed(p, rho);
         e = internal_energy(p, rho);
-        Ma = u / a;
+        Ma = mach_number(u, a);
         H = (E(density, velocity, pressure) + pressure) / density;
     }
 
@@ -323,7 +331,7 @@ class ConservativeVar
 
     double pressure()
     {
-        return G8 * (u[2] - 0.5 * pow(u[1], 2) / u[0]);
+        return max(G8 * (u[2] - 0.5 * pow(u[1], 2) / u[0]), 0.0);
     }
 
     PrimitiveVar toPrimitive()
