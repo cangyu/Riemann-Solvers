@@ -140,13 +140,22 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### HLL(ch10)
+By esitmate the 2 fastest wave spreading speed, the averaged flow variable in between are __constant__!
 
-#### Wave speed estimated directly under Roe-average
+#### Direct estimation under Roe-average
+The wave spreading speed at left and right front are esitmated according to corresponding __eigenvalues__. The key part in practice is the __Roe-averaged eigenvalues__.
 
-#### Pressure-based wave speed estimation
+#### Pressure-based estimation
+Approximate the pressure at star region, and then estimate the speed at wave front from the exact solution of Riemann Problem.
 
-### HLL(ch11)
+#### Rusanov
+Only the maximun wave spreading speed is approximated according to eigenvalues, this is a much simpler choice for the fastest signal velocities.
 
-#### Wave speed estimated directly under Roe-average
+### HLLC(ch11)
+An internal wave is added compared with HLL so that contact is better resolved.
 
-#### Pressure-based wave speed estimation
+#### Direct estimation under Roe-average
+Same as that in HLL.
+
+#### Pressure-based estimation
+Same as that in HLL.
