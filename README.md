@@ -139,3 +139,14 @@ Usage:
 > * Execute: `./ANRS.out < inp.dat`  
 > * Plot: `python3 animate.py`
 
+### HLL(ch10)
+
+#### Wave speed estimated directly under Roe-average
+
+#### Pressure-based wave speed estimation
+
+### HLL(ch11)
+
+#### Wave speed estimated directly under Roe-average
+
+#### Pressure-based wave speed estimation
