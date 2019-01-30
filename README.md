@@ -143,19 +143,52 @@ Usage:
 By esitmate the 2 fastest wave spreading speed, the averaged flow variable in between are __constant__!
 
 #### Direct estimation under Roe-average
-The wave spreading speed at left and right front are esitmated according to corresponding __eigenvalues__. The key part in practice is the __Roe-averaged eigenvalues__.
+The wave spreading speed at left and right front are esitmated according to corresponding __eigenvalues__. The key part in practice is the __Roe-averaged eigenvalues__.  
+
+Usage:
+> * Compile: `g++ direct.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
 
 #### Pressure-based estimation
-Approximate the pressure at star region, and then estimate the speed at wave front from the exact solution of Riemann Problem.
+Approximate the pressure at star region, and then estimate the speed at wave front from the exact solution of Riemann Problem.  
+
+Usage:
+> * Compile: `g++ pressure_based.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
 
 #### Rusanov
-Only the maximun wave spreading speed is approximated according to eigenvalues, this is a much simpler choice for the fastest signal velocities.
+Only the maximun wave spreading speed is approximated according to eigenvalues, this is a much simpler choice for the fastest signal velocities.  
 
-### HLLC(ch11)
+Usage:
+> * Compile: `g++ rusanov.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+### HLLC(ch10)
 An internal wave is added compared with HLL so that contact is better resolved.
 
 #### Direct estimation under Roe-average
-Same as that in HLL.
+Same as that in HLL.  
+
+Usage:
+> * Compile: `g++ direct.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
 
 #### Pressure-based estimation
-Same as that in HLL.
+Same as that in HLL.  
+
+Usage:
+> * Compile: `g++ pressure_based.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
+### Roe(ch11)
+Instead of estimating the signal prompting speed, another approach seeks to approximate the Jacobian matrix with known left and right states such that 3 essential properties(Hyperbolicity, Consistency and Conservation across discontinuities) are satisfied. An ingenious way to construct such a approximated Jacobian matrix is given by Roe, where the famous parameter vector consists the __square root of density__ is introduced.
+
+#### Original Method
+The inter-cell flux is computed from the wave strength, eigenvalues and eigenvectors explicitly.
+
+#### Roe-Pike Method
