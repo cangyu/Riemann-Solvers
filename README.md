@@ -167,26 +167,15 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### HLLC(ch10)
-An internal wave is added compared with HLL so that contact is better resolved.
-
-#### Direct estimation under Roe-average
-Same as that in HLL.  
+An internal wave is added compared with HLL so that contact is better resolved, and there're 2 ways to estimate the signal speed, namely the __Direct estimation under Roe-average__ and the __Pressure-based estimation__  
 
 Usage:
-> * Compile: `g++ direct.cc -std=c++11 -o Euler.out`  
-> * Execute: `./Euler.out < inp.dat`  
-> * Plot: `python3 animate.py`
-
-#### Pressure-based estimation
-Same as that in HLL.  
-
-Usage:
-> * Compile: `g++ pressure_based.cc -std=c++11 -o Euler.out`  
-> * Execute: `./Euler.out < inp.dat`  
+> * Compile: `g++ direct.cc -std=c++11 -o Euler.out` or `g++ pressure_based.cc -std=c++11 -o Euler.out`
+> * Execute: `./Euler.out < inp.dat`
 > * Plot: `python3 animate.py`
 
 ### Roe(ch11)
-Instead of estimating the signal prompting speed, another approach seeks to approximate the Jacobian matrix with known left and right states such that 3 essential properties(Hyperbolicity, Consistency and Conservation across discontinuities) are satisfied. An ingenious way to construct such a approximated Jacobian matrix is given by Roe, where the famous parameter vector consists the __square root of density__ is introduced. In practice, the inter-cell flux is computed from the wave strength, eigenvalues and eigenvectors explicitly.
+Instead of estimating the signal prompting speed, another approach seeks to approximate the Jacobian matrix with known left and right states such that 3 essential properties(Hyperbolicity, Consistency and Conservation across discontinuities) are satisfied. An ingenious way to construct such a linearized Jacobian matrix is given by Roe, where the famous parameter vector consists the __square root of density__ is introduced. In practice, the inter-cell flux is computed from the wave strength, eigenvalues and eigenvectors explicitly.
 
 Usage:
 > * Compile: `g++ main.cc -std=c++11 -o Euler.out`  
