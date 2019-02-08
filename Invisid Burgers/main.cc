@@ -372,6 +372,67 @@ void Godunov()
     cout << "Done!" << endl;
 }
 
+double osher_intercell_flux(double u0, double u1)
+{
+    if(u0>0 && u1>0)
+        return flux(u0);
+    else if(u0<0 && u1<0)
+        return flux(u1);
+    else if(u0>=0 && 0 >= u1)
+        return flux(u0) + flux(u1);
+    else
+        return 0.0;
+}
+
+void Osher()
+{
+    ofstream fout("Osher.txt");
+    if(!fout)
+        throw "Failed to create file!\n";
+
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
+
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
+    
+    //Transparent BC
+    u_prev[0] = u_prev[1];
+    u_prev[NumOfPnt+1] = u_prev[NumOfPnt];
+
+    write_u(fout, u_prev);
+
+    //Iterate over time
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        vector<double> u_mid(NumOfPnt+1, 0);
+        double S_max = 0;
+
+        for(int i = 0; i <= NumOfPnt; i++)
+        {
+            u_mid[i] = intermediate_u(u_prev[i], u_prev[i+1]);
+            S_max = max(S_max, intercell_speed(u_prev[i], u_prev[i+1]));
+        }
+
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            double osher_flux_l = osher_intercell_flux(u_prev[i-1], u_prev[i]);
+            double osher_flux_r = osher_intercell_flux(u_prev[i], u_prev[i+1]);
+            u_cur[i] = u_prev[i] + CFL/S_max * (osher_flux_l - osher_flux_r);
+        }
+        
+        //Transparent BC
+        u_cur[0] = u_cur[1];
+        u_cur[NumOfPnt+1] = u_cur[NumOfPnt];
+
+        write_u(fout, u_cur);
+        u_prev.swap(u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
+
 int main(int argc, char *argv[])
 {
     cout << "===================================================" << endl;
@@ -399,6 +460,8 @@ int main(int argc, char *argv[])
     Warming_Beam();
     cout << "=======================Godunov=====================" << endl;
     Godunov();
+    cout << "========================Osher======================" << endl;
+    Osher();
     cout << "=========================End=======================" << endl;
 
     return 0;
