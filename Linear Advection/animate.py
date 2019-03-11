@@ -60,5 +60,4 @@ if __name__ == '__main__':
 
     a = animation.FuncAnimation(fig, update, range(NumOfStep))
 
-    plt.tight_layout()
     plt.show()
