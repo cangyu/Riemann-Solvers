@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cmath>
 #include <exception>
@@ -31,6 +32,12 @@ vector<double> u_cur(NumOfPnt+2, 0.f);
 
 const int NumOfStep = 12500;
 const double dt = CFL * dx / a;
+const double c = a * dt / dx;
+
+double flux(double u)
+{
+    return a * u;
+}
 
 void write_u(ofstream &f, const vector<double> &x)
 {
@@ -260,11 +267,6 @@ void Warming_Beam()
     cout << "Done!" << endl;
 }
 
-double flux(double u)
-{
-    return a * u;
-}
-
 void Godunov()
 {
     ofstream fout("Godunov.txt");
@@ -309,6 +311,53 @@ void Godunov()
     cout << "Done!" << endl;
 }
 
+void WAF(double alpha)
+{
+    stringstream ss;
+    ss << "WAF_" << alpha << ".txt";
+    ofstream fout(ss.str());
+    if(!fout)
+        throw "Failed to create file!\n";
+
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
+
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
+    
+    //Periodical BC
+    u_prev[0] = u_prev[NumOfPnt];
+    u_prev[NumOfPnt+1] = u_prev[1];
+
+    write_u(fout, u_prev);
+
+    //Iterate over time
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            const double fl = flux(u_prev[i-1]);
+            const double fm = flux(u_prev[i]);
+            const double fr = flux(u_prev[i+1]);
+
+            const double fwaf_l = 0.5 * (1+2*alpha*c) * fl + 0.5 * (1-2*alpha*c) *fm;
+            const double fwaf_r = 0.5 * (1+2*alpha*c) * fm + 0.5 * (1-2*alpha*c) *fr;
+
+            u_cur[i] = u_prev[i] + dt/dx * (fwaf_l - fwaf_r);
+        }
+        
+        //Periodical BC
+        u_cur[0] = u_cur[NumOfPnt];
+        u_cur[NumOfPnt+1] = u_cur[1];
+
+        write_u(fout, u_cur);
+        u_prev.swap(u_cur);
+    }
+    fout.close();
+    cout << "alpha=" << alpha << " Done!" << endl;
+}
+
 int main(int argc, char *argv[])
 {
     cout << "===================================================" << endl;
@@ -337,6 +386,16 @@ int main(int argc, char *argv[])
     Warming_Beam();
     cout << "=======================Godunov=====================" << endl;
     Godunov();
+    cout << "=================WAF(Lax-Wendroff)=================" << endl;
+    WAF(0.5);
+    cout << "==========WAF(Godunov 1st-order upwind)============" << endl;
+    WAF(0.5/fabs(c));
+    cout << "=========WAF(Godunov 1st-order centered)===========" << endl;
+    WAF(1.0);
+    cout << "====================WAF(FORCE)=====================" << endl;
+    WAF((1+pow(c, 2))/(4*pow(c, 2)));
+    cout << "===============WAF(Lax-Friedrichs)=================" << endl;
+    WAF(0.5/pow(c, 2));
     cout << "=========================End=======================" << endl;
 
     return 0;

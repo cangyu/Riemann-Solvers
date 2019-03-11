@@ -37,8 +37,8 @@ if __name__ == '__main__':
         print("{:s} not exist!".format(data2_file_name))
         exit(-3)
 
-    case1_name = data1_file_name.split('.')[0]
-    case2_name = data2_file_name.split('.')[0]
+    case1_name = data1_file_name[:-4]
+    case2_name = data2_file_name[:-4]
 
     NumOfStep, NumOfPnt, x, data1_sol = load_data(data1_file_name)
     _, _, _, data2_sol = load_data(data2_file_name)

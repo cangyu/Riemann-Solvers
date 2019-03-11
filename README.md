@@ -1,7 +1,7 @@
 # Riemann Solvers
 Code snippets follow from ___Riemann Solvers and Numerical Methods for Fluid Dynamics___ by Eleuterio F. Toro, where essentials of CFD are discussed in detail.
 
-## Linear Advection(ch2 & ch5)
+## Linear Advection(ch2 & ch5 & ch13)
 Both _smooth_ and _discontinous_ initial velocity profile are examined.  
 The exact solution is quite trival, just trace back along the characteristic line.  
 Different schemes are employed for comparison:
@@ -10,11 +10,13 @@ Different schemes are employed for comparison:
 > * Lax-Wendroff  
 > * Warming-Beam  
 > * Godunov  
+> * WAF
 
 Usage:  
 > * Compile: `g++ smooth.cc -o a.out` or `g++ discontinuous.cc -o a.out` 
 > * Execute: `./a.out`  
-> * Plot: `python3 animate.py`
+> * Plot: `python3 animate.py data1.txt data2.txt`
+(`data1.txt` and `data2.txt` are the 2 cases you want to compare)
 
 ## Invisid Burgers Equation(ch2 & ch5)
 Only the __discontinous__ initial velocity profile is examined.  
