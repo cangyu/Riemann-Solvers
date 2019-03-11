@@ -183,4 +183,10 @@ Usage:
 > * Plot: `python3 animate.py`
 
 ### Osher(ch12)
-TODO
+The key point of Osher scheme, from my point of view, is the integral in phase space, where integration path should be choosen carefully. An instant choice of integration path is referenced to corresponding eigenvalue, where the path is __tangential__ to the corresponding eigenvector! In this way, the determination of intersections and sonic points are required, and they are computed from Generalised Riemann Invariants, where 2 different ordering can be applied. The physical ordering is implemented in my code.
+
+Usage:
+> * Compile: `g++ main.cc -std=c++11 -o Euler.out`  
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`
+
