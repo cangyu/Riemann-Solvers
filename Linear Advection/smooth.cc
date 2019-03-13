@@ -5,6 +5,8 @@
 #include <cmath>
 #include <exception>
 #include <algorithm>
+#include <functional>
+#include <string>
 
 using namespace std;
 
@@ -358,6 +360,129 @@ void WAF(double alpha)
     cout << "alpha=" << alpha << " Done!" << endl;
 }
 
+double ULTRAA(double r)
+{
+    if(r < 0)
+        return 1.0;
+    else if(r < fabs(c)/(1-fabs(c)))
+        return 1 - 2 * r * (1-fabs(c)) / fabs(c);
+    else
+        return -1.0;
+}
+
+double SUPERA(double r)
+{
+    if(r < 0)
+        return 1.0;
+    else if(r < 0.5)
+        return 1 - 2 * (1-fabs(c)) * r;
+    else if(r < 1)
+        return fabs(c);
+    else if(r < 2)
+        return 1 - (1-fabs(c)) * r;
+    else
+        return 2 * fabs(c) - 1;
+}
+
+double VANLEER(double r)
+{
+    if(r < 0)
+        return 1.0;
+    else
+        return 1 - 2 * (1-fabs(c)) * r / (1 + r);
+}
+
+double VANALBADA(double r)
+{
+    if(r < 0)
+        return 1.0;
+    else
+        return 1 - (1-fabs(c)) * r * (1 + r) / (1 + pow(r, 2.0));
+}
+
+double MINA(double r)
+{
+    if(r < 0)
+        return 1.0;
+    else if(r < 1)
+        return 1 - (1-fabs(c)) * r;
+    else
+        return fabs(c);
+}
+
+double ratio_of_upwind_change(const vector<double> &u, int i)
+{
+    const auto N = u.size() - 2;
+
+    double loc_du = u[i+1] - u[i];
+    double upw_du = 0.0;
+    if(a > 0)
+        upw_du = u[i] - u[i-1];
+    else
+    {
+        // For periodical B.C.
+        if(i==N)
+            upw_du = u[2] - u[i+1];
+        else 
+            upw_du = u[i+2] - u[i+1];
+    }
+
+    return upw_du / loc_du;
+}
+
+void TVD_WAF(function<double(double)> phi, const string &NameOfLimiter)
+{
+    stringstream ss;
+    ss << "TVD_WAF(" << NameOfLimiter << ").txt";
+    ofstream fout(ss.str());
+    if(!fout)
+        throw "Failed to create file!\n";
+
+    fout << NumOfStep << "\t" << NumOfPnt << endl;
+    write_x(fout, x);
+
+    //IC
+    for(int i = 1; i <= NumOfPnt; i++)
+        u_prev[i] = u0(x[i-1]);
+    
+    //Periodical BC
+    u_prev[0] = u_prev[NumOfPnt];
+    u_prev[NumOfPnt+1] = u_prev[1];
+
+    write_u(fout, u_prev);
+
+    //Iterate over time
+    for(int k = 1; k < NumOfStep; k++)
+    {
+        for(int i = 1; i <= NumOfPnt; i++)
+        {
+            const double fl = flux(u_prev[i-1]);
+            const double fm = flux(u_prev[i]);
+            const double fr = flux(u_prev[i+1]);
+
+            const double rl = ratio_of_upwind_change(u_prev, i-1);
+            const double rr = ratio_of_upwind_change(u_prev, i);
+
+            const double pl = phi(rl);
+            const double pr = phi(rr);
+
+            const double fwaf_l = 0.5 * (1+pl) * fl + 0.5 * (1-pl) *fm;
+            const double fwaf_r = 0.5 * (1+pr) * fm + 0.5 * (1-pr) *fr;
+
+            u_cur[i] = u_prev[i] + dt/dx * (fwaf_l - fwaf_r);
+        }
+        
+        //Periodical BC
+        u_cur[0] = u_cur[NumOfPnt];
+        u_cur[NumOfPnt+1] = u_cur[1];
+
+        write_u(fout, u_cur);
+        u_prev.swap(u_cur);
+    }
+    fout.close();
+    cout << "Done!" << endl;
+}
+
 int main(int argc, char *argv[])
 {
     cout << "===================================================" << endl;
@@ -396,7 +521,16 @@ int main(int argc, char *argv[])
     WAF((1+pow(c, 2))/(4*pow(c, 2)));
     cout << "===============WAF(Lax-Friedrichs)=================" << endl;
     WAF(0.5/pow(c, 2));
+    cout << "===========TVD version of WAF(ULTRAA)==============" << endl;
+    TVD_WAF(ULTRAA, "ULTRAA");
+    cout << "===========TVD version of WAF(SUPERA)==============" << endl;
+    TVD_WAF(SUPERA, "SUPERA");
+    cout << "==========TVD version of WAF(VANLEER)==============" << endl;
+    TVD_WAF(VANLEER, "VANLEER");
+    cout << "=========TVD version of WAF(VANALBADA)=============" << endl;
+    TVD_WAF(VANALBADA, "VANALBADA");
+    cout << "============TVD version of WAF(MINA)===============" << endl;
+    TVD_WAF(MINA, "MINA");
     cout << "=========================End=======================" << endl;
-
     return 0;
 }
