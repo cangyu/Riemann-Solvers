@@ -403,50 +403,113 @@ void W_fanR(const PrimitiveVar *W, double S, PrimitiveVar &ans)
 
 void ExactSol(const PrimitiveVar &Wl, const PrimitiveVar &Wr, double p_s, double u_s, double rho_sL, double rho_sR, double S, PrimitiveVar &ans)
 {
-	if (S < u_s)
-	{
-		const double S_L = Wl.u - Wl.a * sqrt(G2 * p_s / Wl.p + G1);
-		const double S_HL = Wl.u - Wl.a;
-		const double S_TL = u_s - sound_speed(p_s, rho_sL);
+	const bool leftIsVacuum = fabs(Wl.rho) < 1e-6;
+	const bool rightIsVacuum = fabs(Wr.rho) < 1e-6;
 
-		if (p_s > Wl.p)
-		{
-			if (S < S_L)
-				ans = Wl;
-			else
-				ans.set(rho_sL, u_s, p_s);
-		}
+	if(leftIsVacuum && !rightIsVacuum)
+	{
+		// Left vacuum
+		const double SsR = Wr.u - G4 * Wr.a;
+		const double S_HR = Wr.u + Wr.a;
+
+		if (S <= SsR)
+			ans.set(0, SsR, 0);
+		else if(S < S_HR)
+			W_fanR(&Wr, S, ans);
 		else
-		{
-			if (S < S_HL)
-				ans = Wl;
-			else if (S > S_TL)
-				ans.set(rho_sL, u_s, p_s);
-			else
-				W_fanL(&Wl, S, ans);
-		}
+			ans = Wr;
+	}
+	else if(!leftIsVacuum && rightIsVacuum)
+	{
+		// Right vacuum
+		const double SsL = Wl.u + G4 * Wl.a;
+		const double S_HL = Wl.u - Wl.a;
+
+		if (S <= S_HL)
+			ans = Wl;
+		else if(S < SsL)
+			W_fanL(&Wl, S, ans);
+		else
+			ans.set(0, SsL, 0);
+	}
+	else if(leftIsVacuum && rightIsVacuum)
+	{
+		// Vacuum on both sides
+		ans.set(0.0, 0.5*(Wl.u + Wr.u), 0);
 	}
 	else
 	{
-		const double S_R = Wr.u + Wr.a * sqrt(G2 * p_s / Wr.p + G1);
-		const double S_HR = Wr.u + Wr.a;
-		const double S_TR = u_s + sound_speed(p_s, rho_sR);
-
-		if (p_s > Wr.p)
+		// No vacuum on either side
+		const double du = Wr.u - Wl.u;
+		const double du_crit = G4 * (Wl.a + Wr.a);
+		const bool vacuumInBetween = !(du_crit > du);
+		if(vacuumInBetween)
 		{
-			if (S > S_R)
-				ans = Wr;
+			// Vacuum generated from the Riemann Problem
+			const double SsL = Wl.u + G4 * Wl.a;
+			const double SsR = Wr.u - G4 * Wr.a;
+			const double S_HL = Wl.u - Wl.a;
+			const double S_HR = Wr.u + Wr.a;
+
+			if (S < S_HL)
+				ans = Wl;
+			else if(S < SsL)
+				W_fanL(&Wl, S, ans);
+			else if(S < SsR)
+				ans.set(0.0, 0.5*(Wl.u + Wr.u), 0);
+			else if(S < S_HR)
+				W_fanR(&Wr, S, ans);
 			else
-				ans.set(rho_sR, u_s, p_s);
+				ans = Wr;
 		}
 		else
 		{
-			if (S > S_HR)
-				ans = Wr;
-			else if (S < S_TR)
-				ans.set(rho_sR, u_s, p_s);
+			if (S < u_s)
+			{
+				const double S_L = Wl.u - Wl.a * sqrt(G2 * p_s / Wl.p + G1);
+				const double S_HL = Wl.u - Wl.a;
+				const double S_TL = u_s - sound_speed(p_s, rho_sL);
+
+				if (p_s > Wl.p)
+				{
+					if (S < S_L)
+						ans = Wl;
+					else
+						ans.set(rho_sL, u_s, p_s);
+				}
+				else
+				{
+					if (S < S_HL)
+						ans = Wl;
+					else if (S > S_TL)
+						ans.set(rho_sL, u_s, p_s);
+					else
+						W_fanL(&Wl, S, ans);
+				}
+			}
 			else
-				W_fanR(&Wr, S, ans);
+			{
+				const double S_R = Wr.u + Wr.a * sqrt(G2 * p_s / Wr.p + G1);
+				const double S_HR = Wr.u + Wr.a;
+				const double S_TR = u_s + sound_speed(p_s, rho_sR);
+
+				if (p_s > Wr.p)
+				{
+					if (S > S_R)
+						ans = Wr;
+					else
+						ans.set(rho_sR, u_s, p_s);
+				}
+				else
+				{
+					if (S > S_HR)
+						ans = Wr;
+					else if (S < S_TR)
+						ans.set(rho_sR, u_s, p_s);
+					else
+						W_fanR(&Wr, S, ans);
+				}
+			}
 		}
 	}
 }
