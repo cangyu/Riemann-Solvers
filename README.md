@@ -196,7 +196,20 @@ Usage:
 MUSCL scheme is famous for its novel idea to produce high-order schemes by reconstructing primitive variables. 
 In practice, slope vector at each point is calculated firstly, then the boundary value of each cell is extrapolated with corresponding slope vector. Extrapolated values at boundaries are evolved half of current time-setp from the approximation of governing equations afterwards. Finally, these evolved values are treated as piecewise constant, and are used as the intial profile of Riemann Problem. Once the Riemann problem is solved, the intercell flux can be calculated.
 
+#### Basic
+Basic version of the MUSCL-Hancock Scheme, no limiter applied to the slope vector.  
+Only the first test case can be used for reference.  
+
 Usage:
-> * Compile: `g++ basic.cc -std=c++11 -o Euler.out` or `g++ tvd.cc -std=c++11 -o Euler.out` 
+> * Compile: `g++ basic.cc -std=c++11 -o Euler.out`
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`  
+
+#### TVD
+The TVD version of the MUSCL-Hancock Scheme, 4 limiter functions are provided(SUPERBEE, MINBEE, VANLEER, VANALBDA). Apply the desired limiter function by modifying the source code ranging from line 723-726.  
+Only the first test case can be used for reference.  
+
+Usage:
+> * Compile: `g++ tvd.cc -std=c++11 -o Euler.out` 
 > * Execute: `./Euler.out < inp.dat`  
 > * Plot: `python3 animate.py`  
