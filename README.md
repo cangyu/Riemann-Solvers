@@ -13,9 +13,9 @@ Different schemes are employed for comparison:
 > * WAF
 
 Usage:  
-> * Compile: `g++ smooth.cc -o a.out` or `g++ discontinuous.cc -o a.out` 
-> * Execute: `./a.out`  
-> * Plot: `python3 animate.py data1.txt data2.txt`
+> * Compile: `g++ smooth.cc -std=c++11 -o advection.out` or `g++ discontinuous.cc -std=c++11 -o advection.out` 
+> * Execute: `./advection.out`  
+> * Plot: `python3 animate.py data1.txt data2.txt`  
 (`data1.txt` and `data2.txt` are the 2 cases you want to compare)
 
 ## Invisid Burgers Equation(ch2 & ch5)
@@ -29,8 +29,8 @@ Different schemes are employed for comparison:
 > * Godunov  
 
 Usage:  
-> * Compile: `g++ main.cc -o a.out`
-> * Execute: `./a.out`  
+> * Compile: `g++ main.cc -o -std=c++11 burgers.out`
+> * Execute: `./burgers.out`  
 > * Plot: `python3 animate_single.py` or `python3 animate_all.py`
 
 ## Euler Equation
@@ -190,5 +190,13 @@ The key point of Osher scheme, from my point of view, is the integral in phase s
 Usage:
 > * Compile: `g++ main.cc -std=c++11 -o Euler.out`  
 > * Execute: `./Euler.out < inp.dat`  
-> * Plot: `python3 animate.py`
+> * Plot: `python3 animate.py`  
 
+### MUSCL(ch14)
+MUSCL scheme is famous for its novel idea to produce high-order schemes by reconstructing primitive variables. 
+In practice, slope vector at each point is calculated firstly, then the boundary value of each cell is extrapolated with corresponding slope vector. Extrapolated values at boundaries are evolved half of current time-setp from the approximation of governing equations afterwards. Finally, these evolved values are treated as piecewise constant, and are used as the intial profile of Riemann Problem. Once the Riemann problem is solved, the intercell flux can be calculated.
+
+Usage:
+> * Compile: `g++ basic.cc -std=c++11 -o Euler.out` or `g++ tvd.cc -std=c++11 -o Euler.out` 
+> * Execute: `./Euler.out < inp.dat`  
+> * Plot: `python3 animate.py`  
