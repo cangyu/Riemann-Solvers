@@ -23,7 +23,7 @@ const double G10 = -0.5 * (G0 + 1) / pow(G0, 2);
 const double G11 = -0.5 * (3 * G0 + 1) / G0;
 const double G12 = 1.0 / G0;
 
-const double CFL = 0.6;
+double CFL = 0.2;
 
 const int NumOfPnt = 201;
 const double xL = 0, xR = 1.0;
@@ -627,6 +627,12 @@ int main(int argc, char **argv)
 		for (int i = 1; i < NumOfStep; i++)
 		{
 			cout << "Step: " << i << endl;
+			if(i <= 5)
+				CFL = 0.2;
+			else if(i <= 10)
+				CFL = 0.2 + (i-5) * 0.14;
+			else
+				CFL = 0.9;
 
 			cout << "Converting to conservative form ..." << endl;
 			for(int j = 0; j < NumOfPnt+2; ++j)
