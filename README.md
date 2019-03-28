@@ -74,9 +74,6 @@ Usage:
 > * Execute: `./Richtmyer.out < inp.dat`  
 > * Plot: `python3 animate.py`
 
-### RCM(ch7)
-TODO
-
 ### FVS(ch8)
 Here, the inter-cell flux is not calculatd directly from the exact solution of Riemann Problem. Instead, the flux at each point is splitted into 2 parts: __upstream traveling__ and __downstream traveling__, then, for each inter-cell, the flux is seen as the sum of the upstream traveling part from the __left__ point and the downstream traveling part from the __right__ point.  
 3 typical splitting techniques are introduced.  
